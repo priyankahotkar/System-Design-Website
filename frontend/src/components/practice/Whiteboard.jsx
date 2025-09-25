@@ -120,6 +120,13 @@ const Whiteboard = ({ questionId, whiteboardId }) => {
       img.src = image;
     });
 
+    socket.on('whiteboard:clear', () => {
+      const canvas = canvasRef.current;
+      const ctx = canvasRef.current?.getContext('2d');
+      if (!canvas || !ctx) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    });
+
     return () => {
       socket.disconnect();
       socketRef.current = null;
@@ -242,6 +249,9 @@ const Whiteboard = ({ questionId, whiteboardId }) => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (socketRef.current && whiteboardId) {
+      socketRef.current.emit('whiteboard:clear', { whiteboardId });
+    }
   };
 
   const saveCanvas = () => {

@@ -150,6 +150,22 @@ io.on('connection', (socket) => {
         const room = `whiteboard:${whiteboardId}`;
         socket.to(room).emit('whiteboard:snapshot', { image });
     });
+
+    // Clear board for all in room
+    socket.on('whiteboard:clear', async ({ whiteboardId }) => {
+        if (!whiteboardId) return;
+        const room = `whiteboard:${whiteboardId}`;
+        socket.to(room).emit('whiteboard:clear');
+        try {
+            await Whiteboard.findByIdAndUpdate(whiteboardId, {
+                snapshotImage: '',
+                strokes: [],
+            });
+            whiteboardStateCache.set(whiteboardId, { state: { image: '' } });
+        } catch (e) {
+            console.error('Failed to clear whiteboard state', e.message);
+        }
+    });
 });
 
 // Periodic persistence every N ms
