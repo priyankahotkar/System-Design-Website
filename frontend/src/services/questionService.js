@@ -60,6 +60,89 @@ const mockQuestions = [
     estimatedTime: '60+ minutes',
     topics: ['Service Discovery', 'API Gateway', 'Circuit Breaker'],
     createdAt: '2024-01-10T13:00:00Z'
+  },
+
+  // — New ones added below —
+
+  {
+    id: '7',
+    title: 'Design Parking Lot System',
+    description: 'Design a multi-level parking lot management system, supporting different vehicle types and floor capacity management.',
+    category: QUESTION_CATEGORIES.SYSTEM,
+    difficulty: DIFFICULTY_LEVELS.MEDIUM,
+    estimatedTime: '30-45 minutes',
+    topics: ['OOP Design', 'Strategy Pattern', 'Factory Pattern'],
+    createdAt: '2024-01-09T10:00:00Z'
+  },
+  {
+    id: '8',
+    title: 'Design Movie Ticket Booking System',
+    description: 'Build a system to let users search shows, book/cancel tickets, manage seat allocation.',
+    category: QUESTION_CATEGORIES.SCALABILITY,
+    difficulty: DIFFICULTY_LEVELS.HARD,
+    estimatedTime: '45-60 minutes',
+    topics: ['Concurrency', 'Seat Allocation', 'Load Balancer', 'Cache'],
+    createdAt: '2024-01-08T12:00:00Z'
+  },
+  {
+    id: '9',
+    title: 'Design Elevator Management System',
+    description: 'Design a system for elevator control in a high-rise building with scheduling and state management.',
+    category: QUESTION_CATEGORIES.SYSTEM,
+    difficulty: DIFFICULTY_LEVELS.MEDIUM,
+    estimatedTime: '30-45 minutes',
+    topics: ['State Pattern', 'Scheduling Algorithms', 'Concurrency'],
+    createdAt: '2024-01-07T09:30:00Z'
+  },
+  {
+    id: '10',
+    title: 'Design a Library Management System',
+    description: 'Build features like borrow/return books, catalog search, due tracking, reservations.',
+    category: QUESTION_CATEGORIES.DATABASE,
+    difficulty: DIFFICULTY_LEVELS.MEDIUM,
+    estimatedTime: '30-45 minutes',
+    topics: ['ORM', 'Relationships', 'Transactions'],
+    createdAt: '2024-01-06T15:00:00Z'
+  },
+  {
+    id: '11',
+    title: 'Design StackOverflow (Mini-version)',
+    description: 'Implement core features of a Q&A platform: post questions, answers, comments, and vote system.',
+    category: QUESTION_CATEGORIES.SOCIAL,
+    difficulty: DIFFICULTY_LEVELS.HARD,
+    estimatedTime: '45-60 minutes',
+    topics: ['OOP Design', 'Polymorphism', 'Reputation System', 'Search'],
+    createdAt: '2024-01-05T14:30:00Z'
+  },
+  {
+    id: '12',
+    title: 'Design Pub/Sub Messaging Service',
+    description: 'Build a publish-subscribe messaging system supporting multiple topics and subscribers.',
+    category: QUESTION_CATEGORIES.MESSAGING,
+    difficulty: DIFFICULTY_LEVELS.HARD,
+    estimatedTime: '45-60 minutes',
+    topics: ['Message Broker', 'Queueing', 'Partitioning', 'Scaling'],
+    createdAt: '2024-01-04T11:45:00Z'
+  },
+  {
+    id: '13',
+    title: 'Design Rate Limiter',
+    description: 'Design a rate limiting module (e.g. per-user API rate limit) to prevent abuse.',
+    category: QUESTION_CATEGORIES.SECURITY,
+    difficulty: DIFFICULTY_LEVELS.MEDIUM,
+    estimatedTime: '20-30 minutes',
+    topics: ['Token Bucket', 'Leaky Bucket', 'Counters', 'Sliding Window'],
+    createdAt: '2024-01-03T10:20:00Z'
+  },
+  {
+    id: '14',
+    title: 'Design Notification & Push System',
+    description: 'Create a system to send real-time push notifications (email, SMS, push) to users.',
+    category: QUESTION_CATEGORIES.SCALABILITY,
+    difficulty: DIFFICULTY_LEVELS.MEDIUM,
+    estimatedTime: '30-45 minutes',
+    topics: ['Queueing', 'Retry Mechanism', 'Fan-out', 'Backoff Strategy'],
+    createdAt: '2024-01-02T08:50:00Z'
   }
 ];
 

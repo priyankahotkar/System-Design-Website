@@ -39,16 +39,22 @@ const Header = () => {
               Questions
             </Link>
             <Link 
-              to="/leaderboard" 
+              to="/discussion-forum" 
               className="text-slate-600 hover:text-slate-900 font-medium transition-colors"
             >
-              Leaderboard
+              Discussion Forum
             </Link>
             <Link 
               to="/resources" 
               className="text-slate-600 hover:text-slate-900 font-medium transition-colors"
             >
               Resources
+            </Link>
+            <Link 
+              to="/about-us" 
+              className="text-slate-600 hover:text-slate-900 font-medium transition-colors"
+            >
+              About Us
             </Link>
           </nav>
 

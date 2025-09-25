@@ -7,6 +7,8 @@ import DashboardPage from './pages/DashboardPage';
 import PracticePage from './pages/PracticePage';
 import ProfileBadgesPage from './pages/ProfileBadgesPage';
 import ResourcesPage from './pages/ResourcesPage';
+import Discussions from './pages/Discussions';
+import AboutUs from './pages/AboutUs';
 
 function App() {
   return (
@@ -20,6 +22,8 @@ function App() {
             <Route path="/practice/:id" element={<PracticePage />} />
             <Route path="/profile/badges" element={<ProfileBadgesPage />} />
             <Route path="/resources" element={<ResourcesPage />} />
+            <Route path="/discussion-forum" element={<Discussions />} />
+            <Route path="/about-us" element={<AboutUs />} />
           </Routes>
         </Layout>
       </Router>
