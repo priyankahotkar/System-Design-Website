@@ -9,6 +9,9 @@ import ProfileBadgesPage from './pages/ProfileBadgesPage';
 import ResourcesPage from './pages/ResourcesPage';
 import Discussions from './pages/Discussions';
 import AboutUs from './pages/AboutUs';
+import ContactUs from './pages/ContactUs';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsAndConditions from './pages/TermsAndConditions';
 
 function App() {
   return (
@@ -24,6 +27,9 @@ function App() {
             <Route path="/resources" element={<ResourcesPage />} />
             <Route path="/discussion-forum" element={<Discussions />} />
             <Route path="/about-us" element={<AboutUs />} />
+            <Route path="/contact-us" element={<ContactUs />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
           </Routes>
         </Layout>
       </Router>

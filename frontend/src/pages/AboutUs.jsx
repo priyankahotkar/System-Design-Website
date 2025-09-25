@@ -33,7 +33,7 @@ const AboutUs = () => {
             <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-6">
               <div className="flex items-center gap-3 mb-4">
                 <BookOpen className="h-6 w-6 text-primary-500" />
-                <span className="font-semibold text-slate-900">SystemDesign Pro</span>
+                <span className="font-semibold text-slate-900">DesignNova</span>
               </div>
               <ul className="text-sm text-slate-700 space-y-2 list-disc pl-5">
                 <li>Collaborative whiteboard with real‑time updates</li>

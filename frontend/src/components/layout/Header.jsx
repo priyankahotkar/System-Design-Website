@@ -20,7 +20,7 @@ const Header = () => {
         <div className="flex justify-between items-center h-16">
           <Link to="/" className="flex items-center space-x-2">
             <BookOpen className="h-8 w-8 text-primary-500" />
-            <span className="text-xl font-bold text-slate-900">SystemDesign Pro</span>
+            <span className="text-xl font-bold text-slate-900">DesignNova</span>
           </Link>
 
           <button
