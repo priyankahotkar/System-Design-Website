@@ -106,7 +106,7 @@ const CodeEditor = ({ questionId }) => {
 
     try {
       console.log("2. Preparing to send request to backend with:", { language, code });
-      const response = await fetch('http://localhost:8080/runCode', {
+      const response = await fetch(`${import.meta.env.VITE_SOCKET_URL}/runCode`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
