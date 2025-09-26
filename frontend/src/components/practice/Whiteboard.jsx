@@ -1,10 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
-import { Palette, Eraser, Square, Circle, Type, Save, Download } from 'lucide-react';
+import ToolBar from './ToolBar';
+import { Palette, Eraser, Square, SquareDashed, Circle, Type, Save, Download } from 'lucide-react';
 import Button from '../common/Button';
 import { createAuthedSocket } from '../../utils/socket';
 
 const Whiteboard = ({ questionId, whiteboardId }) => {
   const canvasRef = useRef(null);
+  const boardRef = useRef(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [tool, setTool] = useState('pen');
   const [color, setColor] = useState('#2563eb');
@@ -15,6 +17,11 @@ const Whiteboard = ({ questionId, whiteboardId }) => {
   const rafRef = useRef(null);
   const lastPointRef = useRef(null);
   const lastEmitRef = useRef(0);
+  const [items, setItems] = useState([]);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [isSelecting, setIsSelecting] = useState(false);
+  const [selectionRect, setSelectionRect] = useState(null); // {x, y, w, h}
+  const itemsEmitRafRef = useRef(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -107,6 +114,13 @@ const Whiteboard = ({ questionId, whiteboardId }) => {
       scheduleDraw();
     });
 
+    // Live collaboration: receive peer item overlays
+    socket.on('whiteboard:items', ({ items: peerItems }) => {
+      if (Array.isArray(peerItems)) {
+        setItems(peerItems);
+      }
+    });
+
     socket.on('whiteboard:snapshot', ({ image }) => {
       if (!image) return;
       const img = new Image();
@@ -163,7 +177,80 @@ const Whiteboard = ({ questionId, whiteboardId }) => {
     });
   };
 
+  // Emit items overlay to peers (throttled with rAF)
+  const emitItems = (nextItems) => {
+    if (!socketRef.current || !whiteboardId) return;
+    const doEmit = () => {
+      itemsEmitRafRef.current = null;
+      socketRef.current.emit('whiteboard:items', { whiteboardId, items: nextItems });
+    };
+    if (itemsEmitRafRef.current) return;
+    itemsEmitRafRef.current = requestAnimationFrame(doEmit);
+  };
+
+  // Draw a single icon item into canvas honoring tint color
+  const drawItemToCtx = (ctx, item) => {
+    const img = new Image();
+    img.onload = () => {
+      if (!item.tint) {
+        ctx.drawImage(img, item.x, item.y, item.width, item.height);
+        return;
+      }
+      const off = document.createElement('canvas');
+      off.width = item.width;
+      off.height = item.height;
+      const offCtx = off.getContext('2d');
+      offCtx.drawImage(img, 0, 0, item.width, item.height);
+      offCtx.globalCompositeOperation = 'source-in';
+      offCtx.fillStyle = item.tint;
+      offCtx.fillRect(0, 0, item.width, item.height);
+      ctx.drawImage(off, item.x, item.y);
+    };
+    img.src = item.src;
+  };
+
+  // Paint provided items onto canvas and broadcast snapshot
+  const bakeItemsToCanvas = (itemsToBake) => {
+    if (!itemsToBake || itemsToBake.length === 0) return;
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (!canvas || !ctx) return;
+    itemsToBake.forEach((it) => drawItemToCtx(ctx, it));
+    if (socketRef.current && whiteboardId) {
+      const image = canvas.toDataURL('image/png');
+      socketRef.current.emit('whiteboard:snapshot', { whiteboardId, image });
+    }
+  };
+
   const startDrawing = (e) => {
+    if (tool === 'select') {
+      // Begin marquee selection
+      const rect = boardRef.current?.getBoundingClientRect();
+      const startX = e.clientX - (rect?.left || 0);
+      const startY = e.clientY - (rect?.top || 0);
+      setIsSelecting(true);
+      setSelectionRect({ x: startX, y: startY, w: 0, h: 0 });
+      const onMove = (ev) => {
+        const curX = ev.clientX - (rect?.left || 0);
+        const curY = ev.clientY - (rect?.top || 0);
+        const x = Math.min(startX, curX);
+        const y = Math.min(startY, curY);
+        const w = Math.abs(curX - startX);
+        const h = Math.abs(curY - startY);
+        setSelectionRect({ x, y, w, h });
+      };
+      const onUp = () => {
+        window.removeEventListener('mousemove', onMove);
+        window.removeEventListener('mouseup', onUp);
+        setIsSelecting(false);
+        // Use the final rect directly for faster selection resolution
+        const finalRect = selectionRect;
+        setSelectedIds(items.filter((it) => rectsIntersect({ x: it.x, y: it.y, w: it.width, h: it.height }, finalRect || { x: 0, y: 0, w: 0, h: 0 })).map((it) => it.id));
+      };
+      window.addEventListener('mousemove', onMove);
+      window.addEventListener('mouseup', onUp);
+      return;
+    }
     const canvas = canvasRef.current;
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -245,6 +332,61 @@ const Whiteboard = ({ questionId, whiteboardId }) => {
     if (ctx) ctx.globalCompositeOperation = 'source-over';
   };
 
+  // Helper: AABB intersection
+  const rectsIntersect = (a, b) => {
+    if (!a || !b) return false;
+    return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+  };
+
+  // Select single item on click
+  const handleItemMouseDown = (e, id) => {
+    if (tool === 'select') {
+      // Select the item and allow drag
+      setSelectedIds([id]);
+    }
+    startDragItem(e, id);
+  };
+
+  // Keyboard handlers for delete/backspace
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (selectedIds.length) {
+          setItems((prev) => {
+            const remaining = prev.filter((it) => !selectedIds.includes(it.id));
+            emitItems(remaining);
+            return remaining;
+          });
+          setSelectedIds([]);
+        }
+        if (selectionRect) {
+          // Clear canvas area inside selection rect
+          const canvas = canvasRef.current;
+          const ctx = canvas?.getContext('2d');
+          if (canvas && ctx) {
+            ctx.clearRect(selectionRect.x, selectionRect.y, selectionRect.w, selectionRect.h);
+          }
+          setSelectionRect(null);
+        }
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [selectedIds, selectionRect]);
+
+  // When picking a color, update selected icons' tint if any are selected
+  const handlePickColor = (nextColor) => {
+    if (selectedIds.length) {
+      setItems((prev) => {
+        const updated = prev.map((it) => selectedIds.includes(it.id) ? { ...it, tint: nextColor } : it);
+        emitItems(updated);
+        return updated;
+      });
+    } else {
+      setColor(nextColor);
+    }
+  };
+
   const clearCanvas = () => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
@@ -263,10 +405,109 @@ const Whiteboard = ({ questionId, whiteboardId }) => {
     link.click();
   };
 
+  // Drag-and-drop icons from ToolBar
+  const handleDrop = (e) => {
+    const raw = e.dataTransfer.getData('application/json');
+    if (!raw) return;
+    try {
+      const payload = JSON.parse(raw);
+      if (payload?.type !== 'WHITEBOARD_ICON') return;
+      const rect = boardRef.current?.getBoundingClientRect();
+      const x = e.clientX - (rect?.left || 0);
+      const y = e.clientY - (rect?.top || 0);
+      const size = 64;
+      const newItem = {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        key: payload.item.key,
+        src: payload.item.src,
+        x: Math.max(0, x - size / 2),
+        y: Math.max(0, y - size / 2),
+        width: size,
+        height: size
+      };
+      setItems((prev) => {
+        const next = [...prev, newItem];
+        emitItems(next);
+        return next;
+      });
+    } catch {}
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+  };
+
+  const startDragItem = (e, id) => {
+    e.stopPropagation();
+    const startX = e.clientX;
+    const startY = e.clientY;
+    setItems((prev) => prev.map((it) => it.id === id ? { ...it, _drag: { startX, startY, startXPos: it.x, startYPos: it.y } } : it));
+    const onMove = (ev) => {
+      const rect = boardRef.current?.getBoundingClientRect();
+      setItems((prev) => {
+        const next = prev.map((it) => {
+          if (it.id !== id || !it._drag) return it;
+          const dx = ev.clientX - it._drag.startX;
+          const dy = ev.clientY - it._drag.startY;
+          const newX = it._drag.startXPos + dx;
+          const newY = it._drag.startYPos + dy;
+          const maxX = (rect?.width || 0) - it.width;
+          const maxY = (rect?.height || 0) - it.height;
+          return { ...it, x: Math.max(0, Math.min(newX, maxX)), y: Math.max(0, Math.min(newY, maxY)) };
+        });
+        emitItems(next);
+        return next;
+      });
+    };
+    const onUp = () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+      setItems((prev) => {
+        const after = prev.map((it) => it.id === id ? { ...it, _drag: undefined } : it);
+        emitItems(after);
+        return after;
+      });
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  };
+
+  const startResizeItem = (e, id) => {
+    e.stopPropagation();
+    const startX = e.clientX;
+    const startY = e.clientY;
+    setItems((prev) => prev.map((it) => it.id === id ? { ...it, _resize: { startX, startY, startW: it.width, startH: it.height } } : it));
+    const onMove = (ev) => {
+      setItems((prev) => {
+        const next = prev.map((it) => {
+          if (it.id !== id || !it._resize) return it;
+          const dx = ev.clientX - it._resize.startX;
+          const dy = ev.clientY - it._resize.startY;
+          const width = Math.max(24, it._resize.startW + dx);
+          const height = Math.max(24, it._resize.startH + dy);
+          return { ...it, width, height };
+        });
+        emitItems(next);
+        return next;
+      });
+    };
+    const onUp = () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+      setItems((prev) => {
+        const after = prev.map((it) => it.id === id ? { ...it, _resize: undefined } : it);
+        emitItems(after);
+        return after;
+      });
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  };
+
   const tools = [
     { name: 'pen', icon: Type, label: 'Pen' },
     { name: 'eraser', icon: Eraser, label: 'Eraser' },
-    { name: 'rectangle', icon: Square, label: 'Rectangle' },
+    { name: 'select', icon: SquareDashed, label: 'Select area' },
     { name: 'circle', icon: Circle, label: 'Circle' }
   ];
 
@@ -281,6 +522,9 @@ const Whiteboard = ({ questionId, whiteboardId }) => {
             <Button variant="outline" size="small" onClick={saveCanvas}>
               <Save className="h-4 w-4 mr-1" />
               Save
+            </Button>
+            <Button variant="outline" size="small" onClick={() => bakeItemsToCanvas(items)}>
+              Bake
             </Button>
             <Button variant="outline" size="small" onClick={clearCanvas}>
               Clear
@@ -311,7 +555,7 @@ const Whiteboard = ({ questionId, whiteboardId }) => {
             {colors.map((colorOption) => (
               <button
                 key={colorOption}
-                onClick={() => setColor(colorOption)}
+                onClick={() => handlePickColor(colorOption)}
                 className={`w-6 h-6 rounded-full border-2 ${
                   color === colorOption ? 'border-slate-400' : 'border-slate-200'
                 }`}
@@ -334,16 +578,64 @@ const Whiteboard = ({ questionId, whiteboardId }) => {
         </div>
       </div>
 
-      <div className="flex-1 p-0">
-        <canvas
-          ref={canvasRef}
-          onMouseDown={startDrawing}
-          onMouseMove={draw}
-          onMouseUp={stopDrawing}
-          onMouseLeave={stopDrawing}
-          className="w-full h-full cursor-crosshair bg-white"
-          style={{ minHeight: '500px' }}
-        />
+      <div className="flex-1 p-4">
+        <div className="h-full w-full flex gap-3">
+          <div className="w-56 shrink-0">
+            <ToolBar />
+          </div>
+          <div
+            ref={boardRef}
+            className="relative flex-1 bg-white border border-slate-200 rounded-lg overflow-hidden"
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+          >
+            <canvas
+              ref={canvasRef}
+              onMouseDown={startDrawing}
+              onMouseMove={draw}
+              onMouseUp={stopDrawing}
+              onMouseLeave={stopDrawing}
+              className={`absolute inset-0 w-full h-full ${tool === 'select' ? 'cursor-crosshair' : 'cursor-crosshair'}`}
+            />
+            {isSelecting && selectionRect && (
+              <div
+                className="absolute border-2 border-primary-500/60 bg-primary-500/10 pointer-events-none"
+                style={{ left: selectionRect.x, top: selectionRect.y, width: selectionRect.w, height: selectionRect.h }}
+              />
+            )}
+            {items.map((it) => (
+              <div
+                key={it.id}
+                className={`absolute group ${selectedIds.includes(it.id) ? 'ring-2 ring-primary-500' : ''}`}
+                style={{ left: it.x, top: it.y, width: it.width, height: it.height, cursor: 'move' }}
+                onMouseDown={(e) => handleItemMouseDown(e, it.id)}
+              >
+                {it.tint ? (
+                  <div
+                    className="w-full h-full select-none pointer-events-none"
+                    style={{
+                      WebkitMaskImage: `url(${it.src})`,
+                      maskImage: `url(${it.src})`,
+                      WebkitMaskRepeat: 'no-repeat',
+                      maskRepeat: 'no-repeat',
+                      WebkitMaskSize: 'contain',
+                      maskSize: 'contain',
+                      WebkitMaskPosition: 'center',
+                      maskPosition: 'center',
+                      backgroundColor: it.tint
+                    }}
+                  />
+                ) : (
+                  <img src={it.src} alt={it.key} className="w-full h-full select-none pointer-events-none" />
+                )}
+                <div
+                  onMouseDown={(e) => startResizeItem(e, it.id)}
+                  className="absolute -bottom-1 -right-1 h-3 w-3 bg-primary-500 rounded-sm border border-white shadow opacity-0 group-hover:opacity-100 cursor-se-resize"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       <div className="p-4 border-t border-slate-200 text-center">
