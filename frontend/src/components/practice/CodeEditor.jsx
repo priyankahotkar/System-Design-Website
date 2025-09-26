@@ -203,7 +203,7 @@ const CodeEditor = ({ questionId }) => {
             options={{
               fontSize: 14,
               minimap: { enabled: false },
-              scrollBeyondLastLine: false,
+              scrollBeyondLastLine: true,
               wordWrap: 'on',
               quickSuggestions: true,
               suggestOnTriggerCharacters: true,

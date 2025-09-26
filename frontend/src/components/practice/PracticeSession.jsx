@@ -116,10 +116,10 @@ const PracticeSession = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-1 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
           {/* Question Details Sidebar */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-5">
             <div className="card p-6 sticky top-24">
               <h3 className="font-semibold text-slate-900 mb-4">Question Details</h3>
               
@@ -158,7 +158,7 @@ const PracticeSession = () => {
           </div>
 
           {/* Practice Area */}
-          <div className="lg:col-span-3">
+          <div className="lg:col-span-5">
             <div className="mb-6">
               <nav className="flex space-x-8">
                 {tabs.map((tab) => (
@@ -201,7 +201,7 @@ const PracticeSession = () => {
             </div>
           )}
 
-            <div style={{ height: '600px' }}>
+            <div style={{ height: '1000px', width: '100%' }}>
               {activeTab === 'whiteboard' && <Whiteboard questionId={id} whiteboardId={whiteboardId} />}
               {activeTab === 'code' && <CodeEditor questionId={id} />}
             </div>
