@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import { useAuth } from './AuthContext';
+import { auth } from '../../config/firebase';
 
 const EmailVerificationNotice = () => {
   const { user, logout, resendEmailVerification } = useAuth();
   const [isResending, setIsResending] = useState(false);
   const [resendMessage, setResendMessage] = useState('');
 
-  if (!user || user.emailVerified) {
+  // Check if user is authenticated but email is not verified
+  const currentUser = auth.currentUser;
+  if (!user || !currentUser || currentUser.emailVerified) {
     return null;
   }
 
@@ -45,7 +48,7 @@ const EmailVerificationNotice = () => {
               Please verify your email address to continue using the application.
             </p>
             <p className="text-xs mt-1">
-              We sent a verification link to <strong>{user.email}</strong>
+              We sent a verification link to <strong>{currentUser.email}</strong>
             </p>
           </div>
         </div>

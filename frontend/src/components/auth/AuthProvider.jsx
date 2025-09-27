@@ -12,12 +12,13 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchUserProfile = async (token) => {
+  const fetchUserProfile = async (firebaseUser) => {
     try {
-      console.log('Fetching user profile with token:', token);
+      console.log('Fetching user profile with Firebase user:', firebaseUser);
+      const idToken = await firebaseUser.getIdToken();
       const response = await fetch(`${API_URL}/auth/me`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${idToken}`,
           'Content-Type': 'application/json'
         },
       });
@@ -41,17 +42,6 @@ export const AuthProvider = ({ children }) => {
       setIsLoading(true);
       try {
         if (firebaseUser) {
-          // Check if email was just verified
-          if (firebaseUser.emailVerified) {
-            try {
-              // Confirm email verification with backend
-              await authService.confirmEmailVerification(firebaseUser.email, firebaseUser.uid);
-              console.log('Email verification confirmed with backend');
-            } catch (confirmErr) {
-              console.error('Failed to confirm email verification with backend:', confirmErr);
-            }
-          }
-
           // For email/password users, check if email is verified before proceeding
           const isGoogleUser = firebaseUser.providerData.some(provider => provider.providerId === 'google.com');
           if (!isGoogleUser && !firebaseUser.emailVerified) {
@@ -61,46 +51,19 @@ export const AuthProvider = ({ children }) => {
             return;
           }
 
-          // Get the stored token
-          let token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
-          console.log('Stored token:', token);
-
-          if (!token) {
-            // Attempt silent rehydration by exchanging Firebase user for backend JWT
-            try {
-              const response = await authService.loginWithGoogle(firebaseUser, isGoogleUser);
-              if (response?.data?.token) {
-                token = response.data.token;
-                localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, token);
-                localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(response.data));
-                setUser(response.data);
-              }
-            } catch (rehydrateErr) {
-              console.error('Silent token rehydration failed:', rehydrateErr);
-            }
-          }
-
-          if (token) {
-            const userData = await fetchUserProfile(token);
-            if (userData) {
-              // Double-check email verification status from backend
-              if (!isGoogleUser && !userData.emailVerified) {
-                console.log('Backend shows email not verified, logging out user');
-                await logout();
-                setIsLoading(false);
-                return;
-              }
-              setUser(userData);
-            } else {
-              // Token invalid, force new login
-              await logout();
-            }
+          // Fetch user profile using Firebase ID token
+          const userData = await fetchUserProfile(firebaseUser);
+          if (userData) {
+            setUser(userData);
+            // Store user data in localStorage for persistence
+            localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userData));
           } else {
-            // Still no token, force new login
+            // Failed to fetch user profile, force logout
             await logout();
           }
         } else {
           setUser(null);
+          localStorage.removeItem(STORAGE_KEYS.USER);
         }
       } catch (error) {
         console.error('Auth state check failed:', error);
@@ -145,20 +108,15 @@ export const AuthProvider = ({ children }) => {
         throw new Error('Please verify your email address before logging in.');
       }
 
-      // Use authService to handle Google login
-      const response = await authService.loginWithGoogle(firebaseUser, true); // true = Google user
-      console.log('Google login response:', response);
-      
-      if (!response.data || !response.data.token) {
-        throw new Error('Invalid response from server');
+      // Fetch user profile using Firebase ID token
+      const userData = await fetchUserProfile(firebaseUser);
+      if (userData) {
+        setUser(userData);
+        localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userData));
+        return userData;
+      } else {
+        throw new Error('Failed to fetch user profile');
       }
-      
-      // Store the JWT token
-      localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, response.data.token);
-      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(response.data));
-      setUser(response.data);
-      
-      return response.data;
     } catch (error) {
       console.error('Login failed:', error);
       throw error;
@@ -188,14 +146,16 @@ export const AuthProvider = ({ children }) => {
         await signOut(auth);
         throw new Error('Please verify your email before logging in.');
       }
-      const response = await authService.loginWithGoogle(firebaseUser, false); // false = not a Google user
-      if (!response.data || !response.data.token) {
-        throw new Error('Invalid response from server');
+      
+      // Fetch user profile using Firebase ID token
+      const userData = await fetchUserProfile(firebaseUser);
+      if (userData) {
+        setUser(userData);
+        localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userData));
+        return userData;
+      } else {
+        throw new Error('Failed to fetch user profile');
       }
-      localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, response.data.token);
-      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(response.data));
-      setUser(response.data);
-      return response.data;
     } catch (error) {
       console.error('Email login failed:', error);
       throw error;
@@ -207,7 +167,6 @@ export const AuthProvider = ({ children }) => {
       await signOut(auth);
       setUser(null);
       localStorage.removeItem(STORAGE_KEYS.USER);
-      localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
     } catch (error) {
       console.error('Logout failed:', error);
       throw error;
@@ -216,13 +175,14 @@ export const AuthProvider = ({ children }) => {
 
   const updateProfile = async (updateData) => {
     try {
-      const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
-      if (!token) throw new Error('Not authenticated');
+      const currentUser = auth.currentUser;
+      if (!currentUser) throw new Error('Not authenticated');
 
+      const idToken = await currentUser.getIdToken();
       const response = await fetch(`${API_URL}/auth/updateprofile`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${idToken}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(updateData),
@@ -241,61 +201,6 @@ export const AuthProvider = ({ children }) => {
       return updatedUser;
     } catch (error) {
       console.error('Profile update failed:', error);
-      throw error;
-    }
-  };
-
-  const verifyEmail = async () => {
-    try {
-      const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
-      if (!token) throw new Error('Not authenticated');
-
-      const response = await fetch(`${API_URL}/auth/verify-email`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      const { data } = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to verify email');
-      }
-
-      const updatedUser = { ...user, ...data };
-      setUser(updatedUser);
-      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(updatedUser));
-      
-      return updatedUser;
-    } catch (error) {
-      console.error('Email verification failed:', error);
-      throw error;
-    }
-  };
-
-  const checkAndConfirmEmailVerification = async () => {
-    try {
-      const currentUser = auth.currentUser;
-      if (currentUser && currentUser.emailVerified) {
-        // Call backend to confirm verification
-        await authService.confirmEmailVerification(currentUser.email, currentUser.uid);
-        
-        // Refresh user data
-        const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
-        if (token) {
-          const userData = await fetchUserProfile(token);
-          if (userData) {
-            setUser(userData);
-            localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userData));
-          }
-        }
-        return true;
-      }
-      return false;
-    } catch (error) {
-      console.error('Failed to check email verification:', error);
       throw error;
     }
   };
@@ -321,8 +226,6 @@ export const AuthProvider = ({ children }) => {
       login,
       logout,
       updateProfile,
-      verifyEmail,
-      checkAndConfirmEmailVerification,
       resendEmailVerification,
       isAuthenticated: !!user,
       signup,
