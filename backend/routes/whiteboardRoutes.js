@@ -4,13 +4,13 @@ const { protect } = require('../middleware/auth');
 const { createWhiteboard, getOrJoinWhiteboard, listMyWhiteboards } = require('../controllers/whiteboardController');
 
 // Create new whiteboard
-router.post('/', protect, createWhiteboard);
+router.post('/', verifyFirebaseToken, createWhiteboard);
 
 // List my whiteboards, filtered by questionId
-router.get('/', protect, listMyWhiteboards);
+router.get('/', verifyFirebaseToken, listMyWhiteboards);
 
 // Join/fetch existing whiteboard by id
-router.get('/:id', protect, getOrJoinWhiteboard);
+router.get('/:id', verifyFirebaseToken, getOrJoinWhiteboard);
 
 module.exports = router;
 
