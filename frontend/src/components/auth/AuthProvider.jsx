@@ -16,6 +16,7 @@ export const AuthProvider = ({ children }) => {
     try {
       console.log('Fetching user profile with Firebase user:', firebaseUser);
       const idToken = await firebaseUser.getIdToken();
+      localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, idToken);
       const response = await fetch(`${API_URL}/auth/me`, {
         headers: {
           'Authorization': `Bearer ${idToken}`,
@@ -64,6 +65,7 @@ export const AuthProvider = ({ children }) => {
         } else {
           setUser(null);
           localStorage.removeItem(STORAGE_KEYS.USER);
+          localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
         }
       } catch (error) {
         console.error('Auth state check failed:', error);
@@ -167,6 +169,7 @@ export const AuthProvider = ({ children }) => {
       await signOut(auth);
       setUser(null);
       localStorage.removeItem(STORAGE_KEYS.USER);
+      localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
     } catch (error) {
       console.error('Logout failed:', error);
       throw error;

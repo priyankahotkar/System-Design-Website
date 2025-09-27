@@ -2,7 +2,8 @@ require('dotenv').config();
 const express = require("express");
 const http = require('http');
 const { Server } = require('socket.io');
-const jwt = require('jsonwebtoken');
+const { auth } = require('./config/firebase');
+const User = require('./models/User');
 const Whiteboard = require('./models/Whiteboard');
 const cors = require("cors");
 const { exec } = require("child_process");
@@ -13,7 +14,7 @@ const connectDB = require('./config/db');
 
 const app = express();
 const server = http.createServer(app);
-const PORT = process.env.PORT || 10000;
+const PORT = process.env.PORT || 8080;
 
 // Connect to MongoDB
 connectDB();
@@ -43,17 +44,32 @@ const io = new Server(server, {
 const whiteboardStateCache = new Map(); // roomId -> { state, timer }
 const MAX_RECENT_STROKES = Number(process.env.WHITEBOARD_MAX_RECENT_STROKES || 100);
 
-io.use((socket, next) => {
+io.use(async (socket, next) => {
+    const token = socket.handshake.auth?.token;
+    if (!token) {
+        return next(new Error('Authentication error: No token provided'));
+    }
     try {
-        const token = socket.handshake.auth?.token || socket.handshake.headers?.authorization?.split(' ')[1];
-        if (!token) {
-            return next(new Error('Not authorized, no token'));
+        const decodedToken = await auth.verifyIdToken(token);
+        let user = await User.findOne({ firebaseUid: decodedToken.uid });
+
+        if (!user) {
+            // If user does not exist, create a new one
+            user = await User.create({
+                email: decodedToken.email,
+                name: decodedToken.name || decodedToken.email.split('@')[0],
+                firebaseUid: decodedToken.uid,
+                photoURL: decodedToken.picture || '',
+                emailVerified: decodedToken.email_verified
+            });
         }
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        socket.userId = decoded.id;
+
+        // Attach the full user object to the socket
+        socket.user = user;
         next();
-    } catch (err) {
-        next(err);
+    } catch (error) {
+        console.error('Socket authentication error:', error.message);
+        return next(new Error('Authentication error: Invalid token'));
     }
 });
 
@@ -67,9 +83,9 @@ io.on('connection', (socket) => {
         try {
             const whiteboard = await Whiteboard.findById(whiteboardId);
             if (whiteboard) {
-                const isMember = whiteboard.users.some((u) => String(u) === String(socket.userId));
+                const isMember = whiteboard.users.some((u) => u.equals(socket.user._id));
                 if (!isMember) {
-                    whiteboard.users.push(socket.userId);
+                    whiteboard.users.push(socket.user._id);
                     await whiteboard.save();
                 }
                 // Send init payload: snapshot and strokes since snapshot

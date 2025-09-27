@@ -1,7 +1,12 @@
 const API_URL = import.meta.env.VITE_API_URL;
 
-const getAuthHeaders = () => {
-  const token = localStorage.getItem('auth_token');
+import { getAuthToken } from '../utils/auth';
+
+const getAuthHeaders = async () => {
+  const token = await getAuthToken();
+  if (!token) {
+    throw new Error('Not authenticated');
+  }
   return {
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${token}`,
@@ -10,15 +15,17 @@ const getAuthHeaders = () => {
 
 export const badgeService = {
   async listMy() {
-    const res = await fetch(`${API_URL}/badges/me`, { headers: getAuthHeaders() });
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_URL}/badges/me`, { headers });
     const json = await res.json();
     if (!res.ok) throw new Error(json.message || 'Failed to load badges');
     return json.data;
   },
   async award(badge) {
+    const headers = await getAuthHeaders();
     const res = await fetch(`${API_URL}/badges/award`, {
       method: 'POST',
-      headers: getAuthHeaders(),
+      headers,
       body: JSON.stringify(badge),
     });
     const json = await res.json();

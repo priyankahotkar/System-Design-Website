@@ -1,7 +1,12 @@
 const API_URL = import.meta.env.VITE_API_URL;
 
-const getAuthHeaders = () => {
-  const token = localStorage.getItem('auth_token');
+import { getAuthToken } from '../utils/auth';
+
+const getAuthHeaders = async () => {
+  const token = await getAuthToken();
+  if (!token) {
+    throw new Error('Not authenticated');
+  }
   return {
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${token}`,
@@ -10,9 +15,10 @@ const getAuthHeaders = () => {
 
 export const whiteboardService = {
   async create(questionId) {
+    const headers = await getAuthHeaders();
     const res = await fetch(`${API_URL}/whiteboard`, {
       method: 'POST',
-      headers: getAuthHeaders(),
+      headers,
       body: JSON.stringify({ questionId }),
     });
     const json = await res.json();
@@ -21,8 +27,9 @@ export const whiteboardService = {
   },
 
   async getOrJoin(id) {
+    const headers = await getAuthHeaders();
     const res = await fetch(`${API_URL}/whiteboard/${id}`, {
-      headers: getAuthHeaders(),
+      headers,
     });
     const json = await res.json();
     if (!res.ok) throw new Error(json.message || 'Failed to join whiteboard');
@@ -32,8 +39,9 @@ export const whiteboardService = {
   async listByQuestion(questionId) {
     const url = new URL(`${API_URL}/whiteboard`);
     if (questionId) url.searchParams.set('questionId', questionId);
+    const headers = await getAuthHeaders();
     const res = await fetch(url.toString(), {
-      headers: getAuthHeaders(),
+      headers,
     });
     const json = await res.json();
     if (!res.ok) throw new Error(json.message || 'Failed to load whiteboards');

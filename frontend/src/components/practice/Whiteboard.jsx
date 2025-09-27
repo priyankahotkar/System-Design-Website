@@ -3,8 +3,10 @@ import ToolBar from './ToolBar';
 import { Palette, Eraser, Square, SquareDashed, Circle, Type, Save, Download } from 'lucide-react';
 import Button from '../common/Button';
 import { createAuthedSocket } from '../../utils/socket';
+import { useAuth } from '../../hooks/useAuth';
 
 const Whiteboard = ({ questionId, whiteboardId }) => {
+  const { user, isLoading } = useAuth();
   const canvasRef = useRef(null);
   const boardRef = useRef(null);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -40,113 +42,121 @@ const Whiteboard = ({ questionId, whiteboardId }) => {
   }, []);
 
   useEffect(() => {
-    if (!whiteboardId) return;
-    const socket = createAuthedSocket();
-    if (!socket) return;
-    socketRef.current = socket;
+    if (!whiteboardId || isLoading || !user) return;
 
-    socket.on('connect', () => {
-      socket.emit('whiteboard:join', { whiteboardId });
-    });
+    const initializeSocket = async () => {
+      const socket = await createAuthedSocket();
+      if (!socket) return;
 
-    socket.on('whiteboard:init', ({ snapshotImage, strokes }) => {
-      // draw latest saved image state if available
-      if (snapshotImage) {
-        const img = new Image();
-        img.onload = () => {
-          const canvas = canvasRef.current;
-          const ctx = ctxRef.current;
-          if (!canvas || !ctx) return;
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        };
-        img.src = snapshotImage;
-      }
-      // Replay strokes after snapshot
-      if (Array.isArray(strokes) && strokes.length) {
-        drawQueueRef.current.push(...strokes);
-        scheduleDraw();
-      }
-    });
+      socketRef.current = socket;
 
-    socket.on('whiteboard:update', ({ type, x, y, tool: peerTool, color: peerColor, lineWidth: peerWidth, fullState }) => {
-      // Apply fullState image if provided (e.g., after someone finished a stroke)
-      if (fullState && fullState.image) {
-        const img = new Image();
-        img.onload = () => {
-          const canvas = canvasRef.current;
-          const ctx = ctxRef.current;
-          if (!canvas || !ctx) return;
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        };
-        img.src = fullState.image;
-        return;
-      }
+      socket.on('connect', () => {
+        socket.emit('whiteboard:join', { whiteboardId });
+      });
 
-      const ctx = ctxRef.current;
-      const canvas = canvasRef.current;
-      if (!ctx || !canvas) return;
-
-      if (type === 'strokeStart') {
-        ctx.beginPath();
-        ctx.moveTo(x, y);
-      } else if (type === 'strokeMove') {
-        if (peerTool === 'eraser') {
-          ctx.globalCompositeOperation = 'destination-out';
-          ctx.lineWidth = (peerWidth || 2) * 3;
-        } else {
-          ctx.globalCompositeOperation = 'source-over';
-          ctx.strokeStyle = peerColor || '#2563eb';
-          ctx.lineWidth = peerWidth || 2;
+      socket.on('whiteboard:init', ({ snapshotImage, strokes }) => {
+        // draw latest saved image state if available
+        if (snapshotImage) {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = canvasRef.current;
+            const ctx = ctxRef.current;
+            if (!canvas || !ctx) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          };
+          img.src = snapshotImage;
         }
-        ctx.lineTo(x, y);
-        ctx.stroke();
-      } else if (type === 'strokeEnd') {
-        ctx.closePath();
-        ctx.globalCompositeOperation = 'source-over';
-      }
-    });
+        // Replay strokes after snapshot
+        if (Array.isArray(strokes) && strokes.length) {
+          drawQueueRef.current.push(...strokes);
+          scheduleDraw();
+        }
+      });
 
-    socket.on('whiteboard:stroke', ({ stroke }) => {
-      if (!stroke) return;
-      drawQueueRef.current.push(stroke);
-      scheduleDraw();
-    });
+      socket.on('whiteboard:update', ({ type, x, y, tool: peerTool, color: peerColor, lineWidth: peerWidth, fullState }) => {
+        // Apply fullState image if provided (e.g., after someone finished a stroke)
+        if (fullState && fullState.image) {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = canvasRef.current;
+            const ctx = ctxRef.current;
+            if (!canvas || !ctx) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          };
+          img.src = fullState.image;
+          return;
+        }
 
-    // Live collaboration: receive peer item overlays
-    socket.on('whiteboard:items', ({ items: peerItems }) => {
-      if (Array.isArray(peerItems)) {
-        setItems(peerItems);
-      }
-    });
-
-    socket.on('whiteboard:snapshot', ({ image }) => {
-      if (!image) return;
-      const img = new Image();
-      img.onload = () => {
-        const canvas = canvasRef.current;
         const ctx = ctxRef.current;
+        const canvas = canvasRef.current;
+        if (!ctx || !canvas) return;
+
+        if (type === 'strokeStart') {
+          ctx.beginPath();
+          ctx.moveTo(x, y);
+        } else if (type === 'strokeMove') {
+          if (peerTool === 'eraser') {
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.lineWidth = (peerWidth || 2) * 3;
+          } else {
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.strokeStyle = peerColor || '#2563eb';
+            ctx.lineWidth = peerWidth || 2;
+          }
+          ctx.lineTo(x, y);
+          ctx.stroke();
+        } else if (type === 'strokeEnd') {
+          ctx.closePath();
+          ctx.globalCompositeOperation = 'source-over';
+        }
+      });
+
+      socket.on('whiteboard:stroke', ({ stroke }) => {
+        if (!stroke) return;
+        drawQueueRef.current.push(stroke);
+        scheduleDraw();
+      });
+
+      // Live collaboration: receive peer item overlays
+      socket.on('whiteboard:items', ({ items: peerItems }) => {
+        if (Array.isArray(peerItems)) {
+          setItems(peerItems);
+        }
+      });
+
+      socket.on('whiteboard:snapshot', ({ image }) => {
+        if (!image) return;
+        const img = new Image();
+        img.onload = () => {
+          const canvas = canvasRef.current;
+          const ctx = ctxRef.current;
+          if (!canvas || !ctx) return;
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        };
+        img.src = image;
+      });
+
+      socket.on('whiteboard:clear', () => {
+        const canvas = canvasRef.current;
+        const ctx = canvasRef.current?.getContext('2d');
         if (!canvas || !ctx) return;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      };
-      img.src = image;
-    });
+      });
+    };
 
-    socket.on('whiteboard:clear', () => {
-      const canvas = canvasRef.current;
-      const ctx = canvasRef.current?.getContext('2d');
-      if (!canvas || !ctx) return;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-    });
+    initializeSocket();
 
     return () => {
-      socket.disconnect();
-      socketRef.current = null;
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [whiteboardId]);
+  }, [whiteboardId, user, isLoading]);
 
   const scheduleDraw = () => {
     if (rafRef.current) return;
