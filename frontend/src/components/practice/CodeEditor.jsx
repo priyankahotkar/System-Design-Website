@@ -111,6 +111,7 @@ const CodeEditor = ({ questionId }) => {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({ language, code }),
       });
 

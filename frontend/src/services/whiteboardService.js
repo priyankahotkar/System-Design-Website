@@ -10,6 +10,7 @@ const getAuthHeaders = async () => {
   return {
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${token}`,
+    'credentials': 'include',
   };
 };
 
@@ -20,6 +21,7 @@ export const whiteboardService = {
       method: 'POST',
       headers,
       body: JSON.stringify({ questionId }),
+      credentials: 'include',
     });
     const json = await res.json();
     if (!res.ok) throw new Error(json.message || 'Failed to create whiteboard');

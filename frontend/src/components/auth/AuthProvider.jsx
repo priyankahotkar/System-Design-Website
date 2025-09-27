@@ -22,6 +22,7 @@ export const AuthProvider = ({ children }) => {
           'Authorization': `Bearer ${idToken}`,
           'Content-Type': 'application/json'
         },
+        credentials: 'include',
       });
       
       if (response.ok) {
@@ -188,6 +189,7 @@ export const AuthProvider = ({ children }) => {
           'Authorization': `Bearer ${idToken}`,
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify(updateData),
       });
 
