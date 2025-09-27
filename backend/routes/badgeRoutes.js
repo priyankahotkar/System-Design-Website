@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { protect } = require('../middleware/auth');
+const { verifyFirebaseToken } = require('../middleware/auth');
 const { getMyBadges, awardBadge } = require('../controllers/badgeController');
 
 router.get('/me', verifyFirebaseToken, getMyBadges);
