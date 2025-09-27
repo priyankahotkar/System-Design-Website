@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, createUserWithEmailAndPassword, sendEmailVerification, updateProfile as updateFirebaseProfile, signInWithEmailAndPassword } from 'firebase/auth';
+import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, createUserWithEmailAndPassword, sendEmailVerification, updateProfile as updateFirebaseProfile, signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../../config/firebase';
 import { AuthContext } from './AuthContext';
 import { STORAGE_KEYS } from '../../utils/constants';
@@ -41,6 +41,26 @@ export const AuthProvider = ({ children }) => {
       setIsLoading(true);
       try {
         if (firebaseUser) {
+          // Check if email was just verified
+          if (firebaseUser.emailVerified) {
+            try {
+              // Confirm email verification with backend
+              await authService.confirmEmailVerification(firebaseUser.email, firebaseUser.uid);
+              console.log('Email verification confirmed with backend');
+            } catch (confirmErr) {
+              console.error('Failed to confirm email verification with backend:', confirmErr);
+            }
+          }
+
+          // For email/password users, check if email is verified before proceeding
+          const isGoogleUser = firebaseUser.providerData.some(provider => provider.providerId === 'google.com');
+          if (!isGoogleUser && !firebaseUser.emailVerified) {
+            console.log('Email not verified, logging out user');
+            await logout();
+            setIsLoading(false);
+            return;
+          }
+
           // Get the stored token
           let token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
           console.log('Stored token:', token);
@@ -48,7 +68,7 @@ export const AuthProvider = ({ children }) => {
           if (!token) {
             // Attempt silent rehydration by exchanging Firebase user for backend JWT
             try {
-              const response = await authService.loginWithGoogle(firebaseUser);
+              const response = await authService.loginWithGoogle(firebaseUser, isGoogleUser);
               if (response?.data?.token) {
                 token = response.data.token;
                 localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, token);
@@ -63,6 +83,13 @@ export const AuthProvider = ({ children }) => {
           if (token) {
             const userData = await fetchUserProfile(token);
             if (userData) {
+              // Double-check email verification status from backend
+              if (!isGoogleUser && !userData.emailVerified) {
+                console.log('Backend shows email not verified, logging out user');
+                await logout();
+                setIsLoading(false);
+                return;
+              }
               setUser(userData);
             } else {
               // Token invalid, force new login
@@ -112,8 +139,14 @@ export const AuthProvider = ({ children }) => {
 
       console.log('Firebase user:', firebaseUser);
 
+      // Check if email is verified (Google handles this, but we check for consistency)
+      if (!firebaseUser.emailVerified) {
+        await signOut(auth);
+        throw new Error('Please verify your email address before logging in.');
+      }
+
       // Use authService to handle Google login
-      const response = await authService.loginWithGoogle(firebaseUser);
+      const response = await authService.loginWithGoogle(firebaseUser, true); // true = Google user
       console.log('Google login response:', response);
       
       if (!response.data || !response.data.token) {
@@ -155,7 +188,7 @@ export const AuthProvider = ({ children }) => {
         await signOut(auth);
         throw new Error('Please verify your email before logging in.');
       }
-      const response = await authService.loginWithGoogle(firebaseUser);
+      const response = await authService.loginWithGoogle(firebaseUser, false); // false = not a Google user
       if (!response.data || !response.data.token) {
         throw new Error('Invalid response from server');
       }
@@ -212,6 +245,75 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const verifyEmail = async () => {
+    try {
+      const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+      if (!token) throw new Error('Not authenticated');
+
+      const response = await fetch(`${API_URL}/auth/verify-email`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const { data } = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to verify email');
+      }
+
+      const updatedUser = { ...user, ...data };
+      setUser(updatedUser);
+      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(updatedUser));
+      
+      return updatedUser;
+    } catch (error) {
+      console.error('Email verification failed:', error);
+      throw error;
+    }
+  };
+
+  const checkAndConfirmEmailVerification = async () => {
+    try {
+      const currentUser = auth.currentUser;
+      if (currentUser && currentUser.emailVerified) {
+        // Call backend to confirm verification
+        await authService.confirmEmailVerification(currentUser.email, currentUser.uid);
+        
+        // Refresh user data
+        const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+        if (token) {
+          const userData = await fetchUserProfile(token);
+          if (userData) {
+            setUser(userData);
+            localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userData));
+          }
+        }
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Failed to check email verification:', error);
+      throw error;
+    }
+  };
+
+  const resendEmailVerification = async () => {
+    try {
+      const currentUser = auth.currentUser;
+      if (currentUser && !currentUser.emailVerified) {
+        await sendEmailVerification(currentUser);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Failed to resend email verification:', error);
+      throw error;
+    }
+  };
+
   return (
     <AuthContext.Provider value={{
       user,
@@ -219,6 +321,9 @@ export const AuthProvider = ({ children }) => {
       login,
       logout,
       updateProfile,
+      verifyEmail,
+      checkAndConfirmEmailVerification,
+      resendEmailVerification,
       isAuthenticated: !!user,
       signup,
       signupWithEmail,

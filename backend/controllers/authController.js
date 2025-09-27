@@ -29,7 +29,8 @@ const registerUser = asyncHandler(async (req, res) => {
     const user = await User.create({
         name,
         email,
-        password: hashedPassword
+        password: hashedPassword,
+        emailVerified: false // Email verification required for email/password signup
     });
 
     if (user) {
@@ -76,6 +77,12 @@ const loginUser = asyncHandler(async (req, res) => {
         throw new Error('Invalid credentials');
     }
 
+    // Check if email is verified
+    if (!user.emailVerified) {
+        res.status(401);
+        throw new Error('Please verify your email address before logging in');
+    }
+
     // Update last login
     user.lastLogin = Date.now();
     await user.save();
@@ -102,6 +109,12 @@ const getMe = asyncHandler(async (req, res) => {
     if (!user) {
         res.status(404);
         throw new Error('User not found');
+    }
+
+    // For email/password users, check if email is verified
+    if (user.password && !user.emailVerified) {
+        res.status(401);
+        throw new Error('Please verify your email address before accessing the application');
     }
 
     res.status(200).json({
@@ -144,7 +157,7 @@ const updateProfile = asyncHandler(async (req, res) => {
 // @route   POST /api/auth/google
 // @access  Public
 const googleAuth = asyncHandler(async (req, res) => {
-    const { email, name, firebaseUid, photoURL } = req.body;
+    const { email, name, firebaseUid, photoURL, isGoogleUser } = req.body;
 
     if (!email || !firebaseUid) {
         res.status(400);
@@ -160,15 +173,30 @@ const googleAuth = asyncHandler(async (req, res) => {
         user.name = name || user.name;
         user.photoURL = photoURL || user.photoURL;
         user.lastLogin = Date.now();
+        
+        // Only set emailVerified to true for actual Google users
+        if (isGoogleUser) {
+            user.emailVerified = true;
+        }
+        // For email/password users, keep their existing emailVerified status
         await user.save();
     } else {
         // Create user
-        user = await User.create({
+        const userData = {
             email,
             name,
             firebaseUid,
             photoURL
-        });
+        };
+        
+        // Only set emailVerified to true for actual Google users
+        if (isGoogleUser) {
+            userData.emailVerified = true;
+        } else {
+            userData.emailVerified = false;
+        }
+        
+        user = await User.create(userData);
     }
 
     res.status(200).json({
@@ -180,6 +208,74 @@ const googleAuth = asyncHandler(async (req, res) => {
             photoURL: user.photoURL,
             role: user.role,
             token: generateToken(user._id)
+        }
+    });
+});
+
+// @desc    Verify email address (called after Firebase verification)
+// @route   PUT /api/auth/verify-email
+// @access  Private
+const verifyEmail = asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+        res.status(404);
+        throw new Error('User not found');
+    }
+
+    user.emailVerified = true;
+    await user.save();
+
+    res.status(200).json({
+        success: true,
+        message: 'Email verified successfully',
+        data: {
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            photoURL: user.photoURL,
+            role: user.role,
+            emailVerified: user.emailVerified
+        }
+    });
+});
+
+// @desc    Confirm email verification from Firebase
+// @route   POST /api/auth/confirm-email-verification
+// @access  Public
+const confirmEmailVerification = asyncHandler(async (req, res) => {
+    const { email, firebaseUid } = req.body;
+
+    if (!email) {
+        res.status(400);
+        throw new Error('Email is required');
+    }
+
+    // Find user by email or firebaseUid
+    const user = await User.findOne({ 
+        $or: [
+            { email: email },
+            { firebaseUid: firebaseUid }
+        ]
+    });
+
+    if (!user) {
+        res.status(404);
+        throw new Error('User not found');
+    }
+
+    // Update email verification status
+    user.emailVerified = true;
+    await user.save();
+
+    res.status(200).json({
+        success: true,
+        message: 'Email verification confirmed',
+        data: {
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            emailVerified: user.emailVerified
         }
     });
 });
@@ -201,5 +297,7 @@ module.exports = {
     googleAuth,
     getMe,
     updateProfile,
+    verifyEmail,
+    confirmEmailVerification,
     logoutUser
 };

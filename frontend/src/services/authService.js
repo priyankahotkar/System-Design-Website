@@ -35,12 +35,13 @@ export const authService = {
     return data;
   },
 
-  loginWithGoogle: async (googleUser) => {
+  loginWithGoogle: async (googleUser, isGoogleUser = true) => {
     console.log('Sending Google user data:', {
       email: googleUser.email,
       name: googleUser.displayName,
       firebaseUid: googleUser.uid,
       photoURL: googleUser.photoURL,
+      isGoogleUser: isGoogleUser,
     });
 
     const response = await fetch(`${API_URL}/auth/google`, {
@@ -53,6 +54,7 @@ export const authService = {
         name: googleUser.displayName,
         firebaseUid: googleUser.uid,
         photoURL: googleUser.photoURL,
+        isGoogleUser: isGoogleUser,
       }),
     });
 
@@ -82,5 +84,44 @@ export const authService = {
       }
     }
     return true;
+  },
+
+  verifyEmail: async () => {
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(`${API_URL}/auth/verify-email`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || 'Email verification failed');
+    }
+
+    return data;
+  },
+
+  confirmEmailVerification: async (email, firebaseUid = null) => {
+    const response = await fetch(`${API_URL}/auth/confirm-email-verification`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, firebaseUid }),
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || 'Email verification confirmation failed');
+    }
+
+    return data;
   }
 };
