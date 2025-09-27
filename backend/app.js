@@ -20,7 +20,13 @@ const PORT = process.env.PORT || 8080;
 connectDB();
 
 // Middleware
-app.use(cors());
+const corsOptions = {
+    origin: process.env.FRONTEND_ORIGIN || 'https://design-nova.vercel.app',
+    credentials: true,
+};
+  
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // handle preflight  
 app.use(express.json());
 
 // Routes
