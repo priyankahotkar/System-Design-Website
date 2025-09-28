@@ -1,27 +1,27 @@
-# Use slim Debian base
-FROM debian:bullseye-slim
+# Use modern Node.js (20 LTS)
+FROM node:20-slim
 
-# Install runtimes & compilers (no recommended packages to save space)
+# Install additional runtimes & compilers
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
     g++ \
-    openjdk-11-jdk-headless \
-    nodejs \
-    npm \
+    openjdk-17-jdk-headless \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /app
 
-# Copy and install dependencies first (better caching)
+# Copy package files first (better layer caching)
 COPY package*.json ./
+
+# Install only production dependencies
 RUN npm install --production
 
-# Copy app code
+# Copy application source
 COPY . .
 
-# Expose port
+# Expose service port
 EXPOSE 9090
 
 # Start service
