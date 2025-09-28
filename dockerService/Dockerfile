@@ -1,14 +1,17 @@
-# Use Debian slim base
 FROM debian:bullseye-slim
 
-# Install Node.js, npm, Python3, and g++
+# Install curl, ca-certificates
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    nodejs \
-    npm \
+    curl \
     python3 \
     g++ \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
+
+# Install Node 20 LTS
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs \
+    && npm install -g npm@latest
 
 # Set working directory
 WORKDIR /app
@@ -17,7 +20,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install --production
 
-# Copy app source code
+# Copy app code
 COPY . .
 
 # Expose port
