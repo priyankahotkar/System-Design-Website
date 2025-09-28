@@ -12,8 +12,10 @@ A modern, full‑stack platform to practice Low‑Level Design (LLD) and System 
   - Incremental stroke sync with batching and eraser support
   - Snapshot + recent strokes model for fast late‑join loads
   - Synchronized clear for all users in a room
-
-- Integrated code editor with sandboxed execution endpoint
+- Integrated code editor with sandboxed execution
+  - Java → runs via JDoodle API
+  - Python / C++ → executed in isolated Docker sandbox with memory + time limits
+- CORS restricted to backend only
 - Auth (JWT) with Google/email support (backend JWT + Firebase client)
 - Whiteboards persisted in MongoDB with periodic state saves
 - Roadmap and badges (earn on milestones)
@@ -27,7 +29,10 @@ A modern, full‑stack platform to practice Low‑Level Design (LLD) and System 
 - Frontend: React, Vite, TailwindCSS, Socket.IO Client, Monaco Editor
 - Backend: Node.js, Express, Socket.IO, MongoDB (Mongoose)
 - Auth: JWT (server) + Firebase client auth
-- Realtime: Socket.IO (websocket transport)
+- Realtime: Socket.IO (websockets)
+- Code Execution:
+  - JDoodle API (Java)
+  - Local Docker sandbox (Python, C++)
 
 ---
 
@@ -45,6 +50,10 @@ backend/
 frontend/
   src/
   public/
+
+dockerService/
+  app.js
+  Dockerfile
 ```
 
 ---
@@ -54,7 +63,8 @@ frontend/
 - Node.js 18+
 - MongoDB URI
 - Firebase client config (if using Google auth)
-
+- JDoodle Client ID + Secret (for Java execution)
+- Docker (for sandboxed Python/C++ execution)
 ---
 
 ## Environment Variables
@@ -76,6 +86,9 @@ JWT_EXPIRE=7d
 WHITEBOARD_MAX_RECENT_STROKES=100
 WHITEBOARD_PERSIST_MS=15000
 FRONTEND_ORIGIN=http://localhost:5173
+JDOODLE_CLIENT_ID=your_client_id
+JDOODLE_CLIENT_SECRET=your_client_secret
+CODE_RUNNER_URL=http://localhost:9090/runCode
 ```
 
 ### Frontend (`frontend/.env` or `.env.local`)
@@ -110,6 +123,13 @@ cd backend
 node app.js
 ```
 
+2. Start Docker service
+
+```
+cd dockerService
+node app.js
+```
+
 3. Start frontend
 
 ```
@@ -119,7 +139,7 @@ npm run dev
 
 - Frontend dev server: `http://localhost:5173`
 - Backend server: `http://localhost:8080`
-
+- Docker service: `http://localhost:9090`
 ---
 
 ## Backend APIs
@@ -149,6 +169,8 @@ Base path: `/api`
 ### Run Code
 
 - POST `/runCode` – Execute code in sandboxed container (limited languages)
+    - Java: via JDoodle API
+    - Python/C++: via local sandbox service
 
 ---
 
