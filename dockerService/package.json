@@ -1,0 +1,18 @@
+{
+  "name": "dockerservice",
+  "version": "1.0.0",
+  "description": "Service to run all programs inside docker",
+  "license": "ISC",
+  "author": "Priyanka Hotkar",
+  "type": "commonjs",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "node-fetch": "^3.3.2"
+  }
+}
