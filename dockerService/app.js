@@ -6,8 +6,23 @@ const os = require('os');
 const { spawn } = require('child_process');
 
 const app = express();
+// Allow only specific origins
+const allowedOrigins = [
+  'https://designnova.onrender.com',
+  'http://localhost:8080'
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('CORS not allowed for this origin'));
+    }
+  }
+}));
+
 app.use(express.json());
-app.use(cors()); // Allow your frontend or main backend
 
 // Sandbox constraints
 const SANDBOX = {
