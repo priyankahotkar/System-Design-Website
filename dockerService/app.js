@@ -22,7 +22,7 @@ app.post('/runCode', async (req, res) => {
   const config = {
     javascript: { ext: ".js", run: ["node"] },
     python: { ext: ".py", run: ["python3"] },
-    java: { ext: ".java", compile: ["javac"], run: ["java", "SystemDesign"] },
+    java: { ext: ".java", compile: ["javac"], run: ["java", "-XX:ReservedCodeCacheSize=64m", "-Xmx128m", "SystemDesign"] },
     cpp: { ext: ".cpp", compile: ["g++"], run: ["./SystemDesign"] }
   }[language];
 
