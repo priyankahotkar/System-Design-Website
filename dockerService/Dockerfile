@@ -1,28 +1,29 @@
-# Use modern Node.js (20 LTS)
-FROM node:20-slim
+# Use Debian slim base
+FROM debian:bullseye-slim
 
-# Install additional runtimes & compilers
+# Install runtimes & compilers
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
     g++ \
     openjdk-17-jdk-headless \
+    nodejs \
+    npm \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /app
 
-# Copy package files first (better layer caching)
+# Copy package.json first for caching
 COPY package*.json ./
-
-# Install only production dependencies
 RUN npm install --production
 
-# Copy application source
+# Copy app source code
 COPY . .
 
-# Expose service port
-EXPOSE 9090
+# Expose port (Cloud Run uses PORT env)
+ENV PORT 8080
+EXPOSE 8080
 
-# Start service
+# Start Node app
 CMD ["node", "app.js"]
