@@ -1,13 +1,10 @@
 # Use Debian slim base
 FROM debian:bullseye-slim
 
-# Install runtimes & compilers
+# Install runtimes & compilers for Python and C++
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
     g++ \
-    openjdk-17-jdk-headless \
-    nodejs \
-    npm \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
