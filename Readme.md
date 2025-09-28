@@ -123,14 +123,14 @@ cd backend
 node app.js
 ```
 
-2. Start Docker service
+3. Start Docker service
 
 ```
 cd dockerService
 node app.js
 ```
 
-3. Start frontend
+4. Start frontend
 
 ```
 cd frontend
