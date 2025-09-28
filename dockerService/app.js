@@ -20,9 +20,7 @@ app.post('/runCode', async (req, res) => {
   if (!code) return res.status(400).json({ error: 'Code is required' });
 
   const config = {
-    javascript: { ext: ".js", run: ["node"] },
     python: { ext: ".py", run: ["python3"] },
-    java: { ext: ".java", compile: ["javac"], run: ["java", "-XX:ReservedCodeCacheSize=64m", "-Xmx128m", "SystemDesign"] },
     cpp: { ext: ".cpp", compile: ["g++"], run: ["./SystemDesign"] }
   }[language];
 
@@ -37,14 +35,12 @@ app.post('/runCode', async (req, res) => {
 
   // Run process with sandbox (ulimit + timeout)
   const runWithLimits = (cmd, args, cwd, callback) => {
-    // Wrap the command in a shell that sets memory limits
     const fullCmd = `ulimit -v ${SANDBOX.memoryMB * 1024} && ${cmd} ${args.join(" ")}`;
     const proc = spawn(fullCmd, { cwd, shell: true });
 
     proc.stdout.on("data", (data) => (output += data.toString()));
     proc.stderr.on("data", (data) => (output += data.toString()));
 
-    // Timeout protection
     const timeout = setTimeout(() => proc.kill("SIGKILL"), SANDBOX.timeoutMs);
 
     proc.on("close", (code) => {
@@ -55,8 +51,7 @@ app.post('/runCode', async (req, res) => {
 
   // Step 1: compile if needed
   if (config.compile) {
-    const compileArgs =
-      language === "cpp" ? [filename, "-o", "SystemDesign"] : [filename];
+    const compileArgs = [filename, "-o", "SystemDesign"];
 
     runWithLimits(config.compile[0], compileArgs, tempDir, (compileCode) => {
       if (compileCode !== 0) {
@@ -71,7 +66,7 @@ app.post('/runCode', async (req, res) => {
       });
     });
   } else {
-    // Direct run (no compile step)
+    // Direct run (Python)
     runWithLimits(config.run[0], [filename], tempDir, (exitCode) => {
       fs.rmSync(tempDir, { recursive: true, force: true });
       res.json({ output: output.trim(), exitCode });

@@ -11,6 +11,7 @@ const fs = require("fs");
 const path = require("path");
 const os = require("os");
 const connectDB = require('./config/db');
+const axios = require('axios');
 
 const app = express();
 const server = http.createServer(app);
@@ -20,10 +21,23 @@ const PORT = process.env.PORT || 8080;
 connectDB();
 
 // Middleware
-const corsOptions = {
-    origin: process.env.FRONTEND_ORIGIN || 'https://design-nova.vercel.app',
-    credentials: true,
-};
+const allowedOrigins = [
+    'https://design-nova.vercel.app',
+    'http://localhost:5173'
+  ];
+  
+  const corsOptions = {
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like Postman)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    credentials: true
+  };
   
 app.use(cors(corsOptions));
 app.options(/.*/, cors(corsOptions));
@@ -216,58 +230,43 @@ app.get("/", (req, res) => {
     res.send("Root API working");
 });
 
-app.post("/runCode", (req, res) => {
+app.post("/runCode", async (req, res) => {
     const { language, code } = req.body;
 
     if (!code) {
         return res.status(400).json({ error: "Code is required." });
     }
 
-    const config = {
-        javascript: { ext: ".js", image: "node:alpine", run: "node" },
-        python: { ext: ".py", image: "python:alpine", run: "python" },
-        java: { ext: ".java", image: "openjdk:17", compile: "javac", run: "java SystemDesign" },
-        cpp: { ext: ".cpp", image: "gcc:latest", compile: "g++", run: "./SystemDesign" }
-    }[language];
+    if (language === 'java') {
+        try {
+          const response = await axios.post('https://api.jdoodle.com/v1/execute', {
+            clientId: process.env.JDOODLE_CLIENT_ID,
+            clientSecret: process.env.JDOODLE_CLIENT_SECRET,
+            script: code,
+            language: 'java',
+            versionIndex: '4', // Or the version you prefer
+          });
+          return res.json({ output: response.data.output, exitCode: response.data.statusCode });
+        } catch (error) {
+          console.error('Error executing Java code with JDoodle:', error.response ? error.response.data : error.message);
+          return res.status(500).json({ output: 'Error executing Java code.', error: error.message });
+        }
+      }
 
-    if (!config) {
-        return res.status(400).json({ error: "Unsupported language." });
+      if (language === 'python' || language === 'cpp') {
+        try {
+            const response = await axios.post(process.env.CODE_RUNNER_URL, {
+                language,
+                code,
+            });
+            return res.json(response.data);
+        } catch (error) {
+            console.error(`Error forwarding ${language} code execution:`, error.response ? error.response.data : error.message);
+            return res.status(500).json({ output: `Error executing ${language} code.`, error: error.message });
+        }
     }
-
-    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "code-"));
-    const filePath = path.join(tempDir, `SystemDesign${config.ext}`);
-    fs.writeFileSync(filePath, code);
-
-    // Build Docker command
-    let command;
-    if (config.compile) {
-        if (language === "java") {
-            command = `docker run --rm --network none --memory=256m --cpus=0.5 -v "${tempDir}:/usr/src/app" ${config.image} sh -c "cd /usr/src/app && ${config.compile} SystemDesign${config.ext} && ${config.run}"`;
-        } else { // C++
-            command = `docker run --rm --network none --memory=256m --cpus=0.5 -v "${tempDir}:/usr/src/app" ${config.image} sh -c "cd /usr/src/app && ${config.compile} SystemDesign${config.ext} -o SystemDesign && ${config.run}"`;
-        }
-    } else {
-        command = `docker run --rm --network none --memory=256m --cpus=0.5 -v "${filePath}:/usr/src/app/code${config.ext}" ${config.image} ${config.run} /usr/src/app/code${config.ext}`;
-    }
-
-    console.log("Executing command:", command);
-
-    exec(command, { timeout: 5000 }, (error, stdout, stderr) => {
-        console.log("--- Docker Execution Finished ---");
-        console.log("stdout:", stdout);
-        console.log("stderr:", stderr);
-        if (error) {
-            console.log("exec error:", error);
-        }
-        console.log("-------------------------------");
-
-        fs.rmSync(tempDir, { recursive: true, force: true });
-
-        if (error) {
-            return res.json({ output: stderr || error.message });
-        }
-        res.json({ output: stdout || stderr });
-    });
+    
+    res.json({ output: stdout || stderr });
 });
 
 // Error handling middleware (place AFTER routes and respect existing status codes)

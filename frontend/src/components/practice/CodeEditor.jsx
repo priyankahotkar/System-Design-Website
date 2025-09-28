@@ -5,39 +5,6 @@ import Button from '../common/Button';
 
 const getCodeSnippet = (language, questionId) => {
   const snippets = {
-    javascript: `// System Design Implementation for: ${questionId}
-class SystemDesign {
-  constructor() {
-    // Initialize your system components
-    this.loadBalancer = new LoadBalancer();
-    this.database = new Database();
-    this.cache = new Cache();
-  }
-  
-  // Implement your solution here
-  handleRequest(request) {
-    // Your implementation
-  }
-}
-
-// Example usage
-const system = new SystemDesign();
-`,
-    python: `# System Design Implementation for: ${questionId}
-class SystemDesign:
-    def __init__(self):
-        # Initialize your system components
-        self.load_balancer = "LoadBalancer()"
-        self.database = "Database()"
-        self.cache = "Cache()"
-
-    def handle_request(self, request):
-        # Your implementation
-        pass
-
-# Example usage
-system = SystemDesign()
-`,
     java: `// System Design Implementation for: ${questionId}
 class SystemDesign {
     // Initialize your system components
@@ -90,7 +57,7 @@ int main() {
 
 
 const CodeEditor = ({ questionId }) => {
-  const [language, setLanguage] = useState('javascript');
+  const [language, setLanguage] = useState('java');
   const [code, setCode] = useState(getCodeSnippet(language, questionId));
   const [isRunning, setIsRunning] = useState(false);
   const [output, setOutput] = useState('');
@@ -139,7 +106,7 @@ const CodeEditor = ({ questionId }) => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `system-design-${questionId}-solution.${language === 'javascript' ? 'js' : language}`;
+    link.download = `system-design-${questionId}-solution.${language}`;
     link.click();
     URL.revokeObjectURL(url);
   };
@@ -154,7 +121,6 @@ const CodeEditor = ({ questionId }) => {
   };
 
   const languages = [
-    { value: 'javascript', label: 'JavaScript' },
     { value: 'python', label: 'Python' },
     { value: 'java', label: 'Java' },
     { value: 'cpp', label: 'C++' }
