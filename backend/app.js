@@ -237,6 +237,7 @@ app.post("/runCode", async (req, res) => {
         return res.status(400).json({ error: "Code is required." });
     }
 
+    // Handle Java execution with JDoodle
     if (language === 'java') {
         try {
           const response = await axios.post('https://api.jdoodle.com/v1/execute', {
@@ -244,29 +245,32 @@ app.post("/runCode", async (req, res) => {
             clientSecret: process.env.JDOODLE_CLIENT_SECRET,
             script: code,
             language: 'java',
-            versionIndex: '4', // Or the version you prefer
+            versionIndex: '4',
           });
           return res.json({ output: response.data.output, exitCode: response.data.statusCode });
         } catch (error) {
           console.error('Error executing Java code with JDoodle:', error.response ? error.response.data : error.message);
           return res.status(500).json({ output: 'Error executing Java code.', error: error.message });
         }
-      }
+    }
 
-      if (language === 'python' || language === 'cpp') {
+    // Forward Python and C++ to external runner service
+    if (language === 'python' || language === 'cpp') {
         try {
             const response = await axios.post(process.env.CODE_RUNNER_URL, {
                 language,
                 code,
             });
             return res.json(response.data);
-        } catch (error) {
+        } catch (error)
+{
             console.error(`Error forwarding ${language} code execution:`, error.response ? error.response.data : error.message);
             return res.status(500).json({ output: `Error executing ${language} code.`, error: error.message });
         }
     }
-    
-    res.json({ output: stdout || stderr });
+
+    // Fallback for unsupported languages
+    return res.status(400).json({ error: "Unsupported language." });
 });
 
 // Error handling middleware (place AFTER routes and respect existing status codes)
