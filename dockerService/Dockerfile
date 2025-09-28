@@ -25,4 +25,4 @@ COPY . .
 EXPOSE 9090
 
 # Start service
-CMD ["node", "index.js"]
+CMD ["node", "app.js"]
