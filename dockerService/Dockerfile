@@ -1,8 +1,10 @@
 # Use Debian slim base
 FROM debian:bullseye-slim
 
-# Install runtimes & compilers for Python and C++
+# Install Node.js, npm, Python3, and g++
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    nodejs \
+    npm \
     python3 \
     g++ \
     ca-certificates \
@@ -18,7 +20,7 @@ RUN npm install --production
 # Copy app source code
 COPY . .
 
-# Expose port (Cloud Run uses PORT env)
+# Expose port
 ENV PORT 8080
 EXPOSE 8080
 
