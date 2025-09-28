@@ -1,82 +1,282 @@
-const express = require('express');
-const cors = require('cors');
-const fs = require('fs');
-const path = require('path');
-const os = require('os');
-const { spawn } = require('child_process');
+require('dotenv').config();
+const express = require("express");
+const http = require('http');
+const { Server } = require('socket.io');
+const { auth } = require('./config/firebase');
+const User = require('./models/User');
+const Whiteboard = require('./models/Whiteboard');
+const cors = require("cors");
+const { exec } = require("child_process");
+const fs = require("fs");
+const path = require("path");
+const os = require("os");
+const connectDB = require('./config/db');
 
 const app = express();
-app.use(express.json());
-app.use(cors()); // Allow your frontend or main backend
+const server = http.createServer(app);
+const PORT = process.env.PORT || 8080;
 
-// Sandbox constraints
-const SANDBOX = {
-  timeoutMs: 5000,  // 5 seconds max
-  memoryMB: 256,    // 256 MB
+// Connect to MongoDB
+connectDB();
+
+// Middleware
+const corsOptions = {
+    origin: process.env.FRONTEND_ORIGIN || 'https://design-nova.vercel.app',
+    credentials: true,
 };
+  
+app.use(cors(corsOptions));
+app.options(/.*/, cors(corsOptions));
+app.use(express.json());
 
-app.post('/runCode', async (req, res) => {
-  const { language, code } = req.body;
-  if (!code) return res.status(400).json({ error: 'Code is required' });
 
-  const config = {
-    python: { ext: ".py", run: ["python3"] },
-    cpp: { ext: ".cpp", compile: ["g++"], run: ["./SystemDesign"] }
-  }[language];
+// Routes
+const authRoutes = require('./routes/authRoutes');
+const whiteboardRoutes = require('./routes/whiteboardRoutes');
+const badgeRoutes = require('./routes/badgeRoutes');
+app.use('/api/auth', authRoutes);
+app.use('/api/whiteboard', whiteboardRoutes);
+app.use('/api/badges', badgeRoutes);
 
-  if (!config) return res.status(400).json({ error: 'Unsupported language.' });
-
-  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'code-'));
-  const filename = `SystemDesign${config.ext}`;
-  const filepath = path.join(tempDir, filename);
-  fs.writeFileSync(filepath, code);
-
-  let output = "";
-
-  // Run process with sandbox (ulimit + timeout)
-  const runWithLimits = (cmd, args, cwd, callback) => {
-    const fullCmd = `ulimit -v ${SANDBOX.memoryMB * 1024} && ${cmd} ${args.join(" ")}`;
-    const proc = spawn(fullCmd, { cwd, shell: true });
-
-    proc.stdout.on("data", (data) => (output += data.toString()));
-    proc.stderr.on("data", (data) => (output += data.toString()));
-
-    const timeout = setTimeout(() => proc.kill("SIGKILL"), SANDBOX.timeoutMs);
-
-    proc.on("close", (code) => {
-      clearTimeout(timeout);
-      callback(code);
-    });
-  };
-
-  // Step 1: compile if needed
-  if (config.compile) {
-    const compileArgs = [filename, "-o", "SystemDesign"];
-
-    runWithLimits(config.compile[0], compileArgs, tempDir, (compileCode) => {
-      if (compileCode !== 0) {
-        fs.rmSync(tempDir, { recursive: true, force: true });
-        return res.json({ output: output.trim(), exitCode: compileCode });
-      }
-
-      // Step 2: run the program
-      runWithLimits(config.run[0], config.run.slice(1), tempDir, (exitCode) => {
-        fs.rmSync(tempDir, { recursive: true, force: true });
-        res.json({ output: output.trim(), exitCode });
-      });
-    });
-  } else {
-    // Direct run (Python)
-    runWithLimits(config.run[0], [filename], tempDir, (exitCode) => {
-      fs.rmSync(tempDir, { recursive: true, force: true });
-      res.json({ output: output.trim(), exitCode });
-    });
-  }
+// Socket.IO setup with CORS matching frontend dev origin
+const io = new Server(server, {
+    cors: {
+        origin: process.env.FRONTEND_ORIGIN || '*',
+        methods: ['GET', 'POST'],
+        credentials: true,
+    },
 });
 
-const PORT = process.env.PORT || 9090;
-app.listen(PORT, () => console.log(`RunCode service listening on port ${PORT}`));
+// Map to track in-memory latest states and persistence timers per room
+const whiteboardStateCache = new Map(); // roomId -> { state, timer }
+const MAX_RECENT_STROKES = Number(process.env.WHITEBOARD_MAX_RECENT_STROKES || 100);
+
+
+io.use(async (socket, next) => {
+    const token = socket.handshake.auth?.token;
+    if (!token) {
+        return next(new Error('Authentication error: No token provided'));
+    }
+    try {
+        const decodedToken = await auth.verifyIdToken(token);
+        let user = await User.findOne({ firebaseUid: decodedToken.uid });
+
+        if (!user) {
+            // If user does not exist, create a new one
+            user = await User.create({
+                email: decodedToken.email,
+                name: decodedToken.name || decodedToken.email.split('@')[0],
+                firebaseUid: decodedToken.uid,
+                photoURL: decodedToken.picture || '',
+                emailVerified: decodedToken.email_verified
+            });
+        }
+
+        // Attach the full user object to the socket
+        socket.user = user;
+        next();
+    } catch (error) {
+        console.error('Socket authentication error:', error.message);
+        return next(new Error('Authentication error: Invalid token'));
+    }
+});
+
+io.on('connection', (socket) => {
+    socket.on('whiteboard:join', async ({ whiteboardId }) => {
+        if (!whiteboardId) return;
+        const room = `whiteboard:${whiteboardId}`;
+        socket.join(room);
+
+        // Ensure membership in DB
+        try {
+            const whiteboard = await Whiteboard.findById(whiteboardId);
+            if (whiteboard) {
+                const isMember = whiteboard.users.some((u) => u.equals(socket.user._id));
+                if (!isMember) {
+                    whiteboard.users.push(socket.user._id);
+                    await whiteboard.save();
+                }
+                // Send init payload: snapshot and strokes since snapshot
+                const cached = whiteboardStateCache.get(whiteboardId);
+                const state = cached?.state ?? whiteboard.state ?? {};
+                socket.emit('whiteboard:init', {
+                    snapshotImage: whiteboard.snapshotImage || state.image || '',
+                    snapshotAt: whiteboard.snapshotAt || null,
+                    strokes: whiteboard.strokes || [],
+                });
+            } else {
+                socket.emit('whiteboard:error', { message: 'Whiteboard not found' });
+            }
+        } catch (e) {
+            socket.emit('whiteboard:error', { message: 'Join failed' });
+        }
+    });
+
+    socket.on('whiteboard:update', (payload) => {
+        const { whiteboardId, delta, fullState, ...rest } = payload || {};
+        if (!whiteboardId) return;
+        const room = `whiteboard:${whiteboardId}`;
+        // Broadcast to room except sender, forward all relevant fields
+        socket.to(room).emit('whiteboard:update', { delta, fullState, ...rest });
+
+        // Update cache for periodic persistence
+        const current = whiteboardStateCache.get(whiteboardId) || {};
+        if (fullState !== undefined) {
+            current.state = fullState;
+        } else if (delta) {
+            current.state = { ...(current.state || {}), ...delta };
+        }
+        whiteboardStateCache.set(whiteboardId, current);
+    });
+
+
+    // Stroke segment handler with server-side buffering for bulk write
+    const strokeBuffer = new Map(); // whiteboardId -> { strokes: [], timer }
+    socket.on('whiteboard:stroke', async ({ whiteboardId, stroke }) => {
+        if (!whiteboardId || !stroke) return;
+        const room = `whiteboard:${whiteboardId}`;
+        socket.to(room).emit('whiteboard:stroke', { stroke });
+
+        const buf = strokeBuffer.get(whiteboardId) || { strokes: [], timer: null };
+        buf.strokes.push(stroke);
+        if (!buf.timer) {
+            buf.timer = setTimeout(async () => {
+                const toWrite = buf.strokes.splice(0, buf.strokes.length);
+                buf.timer = null;
+                if (toWrite.length) {
+                    try {
+                        await Whiteboard.findByIdAndUpdate(
+                            whiteboardId,
+                            { $push: { strokes: { $each: toWrite, $slice: -MAX_RECENT_STROKES } } }
+                        );
+                    } catch (e) {
+                        console.error('Failed bulk append strokes', e.message);
+                    }
+                }
+            }, 50);
+        }
+        strokeBuffer.set(whiteboardId, buf);
+    });
+
+    // Snapshot image handler
+    socket.on('whiteboard:snapshot', async ({ whiteboardId, image }) => {
+        if (!whiteboardId || !image) return;
+        whiteboardStateCache.set(whiteboardId, { state: { image } });
+        try {
+            // Persist snapshot and reset recent strokes
+            await Whiteboard.findByIdAndUpdate(whiteboardId, {
+                snapshotImage: image,
+                snapshotAt: new Date(),
+                strokes: [],
+            });
+        } catch (e) {
+            console.error('Failed to persist snapshot', e.message);
+        }
+        const room = `whiteboard:${whiteboardId}`;
+        socket.to(room).emit('whiteboard:snapshot', { image });
+    });
+
+    // Clear board for all in room
+    socket.on('whiteboard:clear', async ({ whiteboardId }) => {
+        if (!whiteboardId) return;
+        const room = `whiteboard:${whiteboardId}`;
+        socket.to(room).emit('whiteboard:clear');
+        try {
+            await Whiteboard.findByIdAndUpdate(whiteboardId, {
+                snapshotImage: '',
+                strokes: [],
+            });
+            whiteboardStateCache.set(whiteboardId, { state: { image: '' } });
+        } catch (e) {
+            console.error('Failed to clear whiteboard state', e.message);
+        }
+    });
+
+});
+
+// Periodic persistence every N ms
+const PERSIST_INTERVAL_MS = Number(process.env.WHITEBOARD_PERSIST_MS || 15000);
+setInterval(async () => {
+    const entries = Array.from(whiteboardStateCache.entries());
+    for (const [whiteboardId, { state }] of entries) {
+        if (!state) continue;
+        try {
+            await Whiteboard.findByIdAndUpdate(whiteboardId, { state });
+        } catch (e) {
+            console.error('Failed to persist whiteboard', whiteboardId, e.message);
+        }
+    }
+}, PERSIST_INTERVAL_MS);
+
+server.listen(PORT, () => {
+    console.log(`App running on ${PORT}`);
+});
 
 app.get("/", (req, res) => {
-  res.send("Root Route working");
+    res.send("Root API working");
+});
+
+app.post("/runCode", (req, res) => {
+    const { language, code } = req.body;
+
+    if (!code) {
+        return res.status(400).json({ error: "Code is required." });
+    }
+
+    const config = {
+        javascript: { ext: ".js", image: "node:alpine", run: "node" },
+        python: { ext: ".py", image: "python:alpine", run: "python" },
+        java: { ext: ".java", image: "openjdk:17", compile: "javac", run: "java SystemDesign" },
+        cpp: { ext: ".cpp", image: "gcc:latest", compile: "g++", run: "./SystemDesign" }
+    }[language];
+
+    if (!config) {
+        return res.status(400).json({ error: "Unsupported language." });
+    }
+
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "code-"));
+    const filePath = path.join(tempDir, `SystemDesign${config.ext}`);
+    fs.writeFileSync(filePath, code);
+
+    // Build Docker command
+    let command;
+    if (config.compile) {
+        if (language === "java") {
+            command = `docker run --rm --network none --memory=256m --cpus=0.5 -v "${tempDir}:/usr/src/app" ${config.image} sh -c "cd /usr/src/app && ${config.compile} SystemDesign${config.ext} && ${config.run}"`;
+        } else { // C++
+            command = `docker run --rm --network none --memory=256m --cpus=0.5 -v "${tempDir}:/usr/src/app" ${config.image} sh -c "cd /usr/src/app && ${config.compile} SystemDesign${config.ext} -o SystemDesign && ${config.run}"`;
+        }
+    } else {
+        command = `docker run --rm --network none --memory=256m --cpus=0.5 -v "${filePath}:/usr/src/app/code${config.ext}" ${config.image} ${config.run} /usr/src/app/code${config.ext}`;
+    }
+
+    console.log("Executing command:", command);
+
+    exec(command, { timeout: 5000 }, (error, stdout, stderr) => {
+        console.log("--- Docker Execution Finished ---");
+        console.log("stdout:", stdout);
+        console.log("stderr:", stderr);
+        if (error) {
+            console.log("exec error:", error);
+        }
+        console.log("-------------------------------");
+
+        fs.rmSync(tempDir, { recursive: true, force: true });
+
+        if (error) {
+            return res.json({ output: stderr || error.message });
+        }
+        res.json({ output: stdout || stderr });
+    });
+});
+
+// Error handling middleware (place AFTER routes and respect existing status codes)
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    const statusCode = res.statusCode && res.statusCode !== 200 ? res.statusCode : 500;
+    res.status(statusCode).json({
+        success: false,
+        message: err.message || 'Something went wrong!',
+        error: process.env.NODE_ENV === 'development' ? err.stack : undefined
+    });
 });
