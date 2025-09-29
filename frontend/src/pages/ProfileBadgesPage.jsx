@@ -27,11 +27,11 @@ const ProfileBadgesPage = () => {
 
   return (
     <div className="max-w-5xl mx-auto p-6">
-      <h1 className="text-xl font-semibold text-slate-900 mb-4">Your Badges</h1>
+      <h1 className="text-xl font-semibold text-white mb-4">Your Badges</h1>
       {loading ? (
-        <div className="text-slate-500">Loading badges...</div>
+        <div className="text-gray-400">Loading badges...</div>
       ) : badges.length === 0 ? (
-        <div className="text-slate-500">No badges earned yet.</div>
+        <div className="text-gray-400">No badges earned yet.</div>
       ) : (
         <div className="flex flex-wrap gap-2">
           {badges.map((b, idx) => (

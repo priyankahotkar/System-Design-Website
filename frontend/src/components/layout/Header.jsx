@@ -15,16 +15,16 @@ const Header = () => {
   };
 
   return (
-    <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
+    <header className="bg-gray-900 border-b border-gray-800 sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <Link to="/" className="flex items-center space-x-2">
-            <BookOpen className="h-8 w-8 text-primary-500" />
-            <span className="text-xl font-bold text-slate-900">DesignNova</span>
+            <BookOpen className="h-8 w-8 text-indigo-400" />
+            <span className="text-xl font-bold text-white">DesignNova</span>
           </Link>
 
           <button
-            className="md:hidden inline-flex items-center justify-center p-2 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+            className="md:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-300 hover:text-white hover:bg-gray-800"
             aria-label="Open menu"
             onClick={() => setOpen((v) => !v)}
           >
@@ -34,42 +34,42 @@ const Header = () => {
           <nav className="hidden md:flex items-center space-x-8">
             <Link 
               to="/dashboard" 
-              className="text-slate-600 hover:text-slate-900 font-medium transition-colors"
+              className="text-gray-300 hover:text-white font-medium transition-colors"
             >
               Questions
             </Link>
             <Link 
               to="/discussion-forum" 
-              className="text-slate-600 hover:text-slate-900 font-medium transition-colors"
+              className="text-gray-300 hover:text-white font-medium transition-colors"
             >
               Discussion Forum
             </Link>
             <Link 
               to="/resources" 
-              className="text-slate-600 hover:text-slate-900 font-medium transition-colors"
+              className="text-gray-300 hover:text-white font-medium transition-colors"
             >
               Resources
             </Link>
             <Link 
               to="/about-us" 
-              className="text-slate-600 hover:text-slate-900 font-medium transition-colors"
+              className="text-gray-300 hover:text-white font-medium transition-colors"
             >
               About Us
             </Link>
           </nav>
 
-          <div className="flex items-center space-x-4">
+          <div className="hidden md:flex items-center space-x-4">
             {isAuthenticated ? (
               <>
                 <div className="flex items-center space-x-2">
-                  <User className="h-5 w-5 text-slate-400" />
-                  <span className="text-slate-700 font-medium">{user.name}</span>
+                  <User className="h-5 w-5 text-gray-500" />
+                  <span className="text-gray-300 font-medium">{user.name}</span>
                 </div>
                 <Button
                   variant="outline"
                   size="small"
                   onClick={handleLogout}
-                  className="flex items-center space-x-1"
+                  className="flex items-center space-x-1 border-gray-700 text-gray-300 hover:bg-gray-800"
                 >
                   <LogOut className="h-4 w-4" />
                   <span>Logout</span>
@@ -88,29 +88,29 @@ const Header = () => {
             <Link 
               to="/dashboard" 
               onClick={() => setOpen(false)}
-              className="block px-3 py-2 rounded-md text-slate-700 hover:bg-slate-100"
+              className="block px-3 py-2 rounded-md text-gray-300 hover:bg-gray-800"
             >
               Questions
             </Link>
             <Link 
               to="/leaderboard" 
               onClick={() => setOpen(false)}
-              className="block px-3 py-2 rounded-md text-slate-700 hover:bg-slate-100"
+              className="block px-3 py-2 rounded-md text-gray-300 hover:bg-gray-800"
             >
               Leaderboard
             </Link>
             <Link 
               to="/resources" 
               onClick={() => setOpen(false)}
-              className="block px-3 py-2 rounded-md text-slate-700 hover:bg-slate-100"
+              className="block px-3 py-2 rounded-md text-gray-300 hover:bg-gray-800"
             >
               Resources
             </Link>
-            <div className="border-t border-slate-200 my-2" />
+            <div className="border-t border-gray-700 my-2" />
             {isAuthenticated ? (
               <button
                 onClick={() => { setOpen(false); handleLogout(); }}
-                className="w-full text-left px-3 py-2 rounded-md text-slate-700 hover:bg-slate-100 flex items-center gap-2"
+                className="w-full text-left px-3 py-2 rounded-md text-gray-300 hover:bg-gray-800 flex items-center gap-2"
               >
                 <LogOut className="h-4 w-4" /> Logout
               </button>

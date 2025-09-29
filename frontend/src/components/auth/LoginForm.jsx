@@ -46,12 +46,12 @@ const LoginForm = ({ onToggleMode }) => {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-slate-900 text-center mb-2">Welcome Back</h2>
-        <p className="text-slate-600 text-center">Sign in to continue your system design journey</p>
+        <h2 className="text-2xl font-bold text-white text-center mb-2">Welcome Back</h2>
+        <p className="text-gray-400 text-center">Sign in to continue your system design journey</p>
       </div>
 
       {errors.general && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+        <div className="bg-red-900/50 border border-red-700 text-red-300 px-4 py-3 rounded-lg">
           {errors.general}
         </div>
       )}
@@ -90,10 +90,10 @@ const LoginForm = ({ onToggleMode }) => {
 
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-gray-300"></div>
+          <div className="w-full border-t border-gray-700"></div>
         </div>
         <div className="relative flex justify-center text-sm">
-          <span className="px-2 bg-white text-gray-500">Or continue with</span>
+          <span className="px-2 bg-gray-800 text-gray-500">Or continue with</span>
         </div>
       </div>
 
@@ -129,7 +129,7 @@ const LoginForm = ({ onToggleMode }) => {
         <button
           type="button"
           onClick={onToggleMode}
-          className="text-primary-500 hover:text-primary-600 font-medium"
+          className="text-indigo-400 hover:text-indigo-500 font-medium"
         >
           Don't have an account? Sign up
         </button>

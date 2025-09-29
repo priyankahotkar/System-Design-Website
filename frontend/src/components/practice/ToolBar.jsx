@@ -13,21 +13,21 @@ const ToolBar = ({ onDragStart }) => {
 
   return (
     <div className="card p-3 flex flex-col gap-2 max-h-[70vh] overflow-auto">
-      <div className="text-xs font-medium text-slate-600 mb-1">Tools</div>
+      <div className="text-xs font-medium text-gray-400 mb-1">Tools</div>
       <div className="grid grid-cols-4 gap-2">
         {items.map(({ key, src }) => (
           <button
             key={key}
             draggable
             onDragStart={(e) => handleDragStart(e, { key, src })}
-            className="flex items-center justify-center h-12 w-12 rounded-md border border-slate-200 bg-white hover:bg-slate-50 active:scale-[.98]"
+            className="flex items-center justify-center h-12 w-12 rounded-md border border-gray-700 bg-gray-800 hover:bg-gray-700 active:scale-[.98]"
             title={key}
           >
             <img src={src} alt={key} className="h-6 w-6 pointer-events-none" />
           </button>
         ))}
       </div>
-      <div className="text-[11px] text-slate-500 mt-2">Drag an item onto the whiteboard</div>
+      <div className="text-[11px] text-gray-500 mt-2">Drag an item onto the whiteboard</div>
     </div>
   );
 };

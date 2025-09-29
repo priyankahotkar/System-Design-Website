@@ -89,25 +89,25 @@ const PracticeSession = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-gray-900 text-white">
       {/* Header */}
-      <div className="bg-white border-b border-slate-200 sticky top-0 z-30">
+      <div className="bg-gray-800 border-b border-gray-700 sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-4">
               <Link 
                 to="/dashboard"
-                className="flex items-center text-slate-600 hover:text-slate-900"
+                className="flex items-center text-gray-300 hover:text-white"
               >
                 <ArrowLeft className="h-5 w-5 mr-2" />
                 Back to Questions
               </Link>
-              <div className="h-6 w-px bg-slate-300" />
-              <h1 className="text-lg font-semibold text-slate-900">{question.title}</h1>
+              <div className="h-6 w-px bg-gray-700" />
+              <h1 className="text-lg font-semibold text-white">{question.title}</h1>
             </div>
             
             <div className="flex items-center space-x-4">
-              <div className="flex items-center text-sm text-slate-600">
+              <div className="flex items-center text-sm text-gray-400">
                 <Clock className="h-4 w-4 mr-1" />
                 {question.estimatedTime}
               </div>
@@ -121,21 +121,21 @@ const PracticeSession = () => {
           {/* Question Details Sidebar */}
           <div className="lg:col-span-5">
             <div className="card p-6 sticky top-24">
-              <h3 className="font-semibold text-slate-900 mb-4">Question Details</h3>
+              <h3 className="font-semibold text-white mb-4">Question Details</h3>
               
               <div className="space-y-4">
                 <div>
-                  <h4 className="text-sm font-medium text-slate-700 mb-2">Description</h4>
-                  <p className="text-sm text-slate-600">{question.description}</p>
+                  <h4 className="text-sm font-medium text-gray-300 mb-2">Description</h4>
+                  <p className="text-sm text-gray-400">{question.description}</p>
                 </div>
 
                 <div>
-                  <h4 className="text-sm font-medium text-slate-700 mb-2">Key Topics</h4>
+                  <h4 className="text-sm font-medium text-gray-300 mb-2">Key Topics</h4>
                   <div className="flex flex-wrap gap-2">
                     {question.topics.map((topic, index) => (
                       <span 
                         key={index}
-                        className="px-2 py-1 bg-slate-100 text-slate-600 rounded-md text-xs"
+                        className="px-2 py-1 bg-gray-700 text-gray-300 rounded-md text-xs"
                       >
                         {topic}
                       </span>
@@ -144,8 +144,8 @@ const PracticeSession = () => {
                 </div>
 
                 <div>
-                  <h4 className="text-sm font-medium text-slate-700 mb-2">Approach</h4>
-                  <ul className="text-sm text-slate-600 space-y-1">
+                  <h4 className="text-sm font-medium text-gray-300 mb-2">Approach</h4>
+                  <ul className="text-sm text-gray-400 space-y-1">
                     <li>• Understand requirements</li>
                     <li>• Estimate scale</li>
                     <li>• Design high-level architecture</li>
@@ -167,8 +167,8 @@ const PracticeSession = () => {
                     onClick={() => setActiveTab(tab.id)}
                     className={`pb-4 px-1 border-b-2 font-medium text-sm ${
                       activeTab === tab.id
-                        ? 'border-primary-500 text-primary-600'
-                        : 'border-transparent text-slate-500 hover:text-slate-700'
+                        ? 'border-indigo-400 text-indigo-300'
+                        : 'border-transparent text-gray-500 hover:text-gray-300'
                     }`}
                   >
                     <div className="flex items-center">
@@ -184,13 +184,13 @@ const PracticeSession = () => {
               <Button variant="primary" onClick={handleCreateWhiteboard}>Create Whiteboard</Button>
               <Button variant="outline" onClick={handleJoinWhiteboard}>Join Whiteboard</Button>
               {whiteboardId && (
-                <span className="text-xs text-slate-500">Current Whiteboard ID: {whiteboardId}</span>
+                <span className="text-xs text-gray-500">Current Whiteboard ID: {whiteboardId}</span>
               )}
             </div>
 
           {pastWhiteboards?.length > 0 && (
             <div className="card p-4 mb-4">
-              <h4 className="text-sm font-semibold text-slate-700 mb-2">Past Whiteboards</h4>
+              <h4 className="text-sm font-semibold text-gray-300 mb-2">Past Whiteboards</h4>
               <div className="flex flex-wrap gap-2">
                 {pastWhiteboards.map(wb => (
                   <Button key={wb.id} variant="secondary" onClick={() => setWhiteboardId(wb.id)}>

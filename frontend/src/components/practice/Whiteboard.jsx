@@ -525,9 +525,9 @@ const Whiteboard = ({ questionId, whiteboardId }) => {
 
   return (
     <div className="card h-full flex flex-col">
-      <div className="p-4 border-b border-slate-200">
+      <div className="p-4 border-b border-gray-700">
         <div className="flex items-center justify-between">
-          <h3 className="font-semibold text-slate-900">Whiteboard</h3>
+          <h3 className="font-semibold text-white">Whiteboard</h3>
           <div className="flex items-center space-x-2">
             <Button variant="outline" size="small" onClick={saveCanvas}>
               <Save className="h-4 w-4 mr-1" />
@@ -550,8 +550,8 @@ const Whiteboard = ({ questionId, whiteboardId }) => {
                 onClick={() => setTool(toolItem.name)}
                 className={`p-2 rounded-md transition-colors ${
                   tool === toolItem.name 
-                    ? 'bg-primary-500 text-white' 
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    ? 'bg-indigo-500 text-white' 
+                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                 }`}
                 title={toolItem.label}
               >
@@ -561,13 +561,13 @@ const Whiteboard = ({ questionId, whiteboardId }) => {
           </div>
 
           <div className="flex items-center space-x-2">
-            <Palette className="h-4 w-4 text-slate-400" />
+            <Palette className="h-4 w-4 text-gray-400" />
             {colors.map((colorOption) => (
               <button
                 key={colorOption}
                 onClick={() => handlePickColor(colorOption)}
                 className={`w-6 h-6 rounded-full border-2 ${
-                  color === colorOption ? 'border-slate-400' : 'border-slate-200'
+                  color === colorOption ? 'border-white' : 'border-gray-700'
                 }`}
                 style={{ backgroundColor: colorOption }}
               />
@@ -575,7 +575,7 @@ const Whiteboard = ({ questionId, whiteboardId }) => {
           </div>
 
           <div className="flex items-center space-x-2">
-            <label className="text-sm text-slate-600">Size:</label>
+            <label className="text-sm text-gray-300">Size:</label>
             <input
               type="range"
               min="1"
@@ -595,7 +595,7 @@ const Whiteboard = ({ questionId, whiteboardId }) => {
           </div>
           <div
             ref={boardRef}
-            className="relative flex-1 bg-white border border-slate-200 rounded-lg overflow-hidden"
+            className="relative flex-1 bg-gray-800 border border-gray-700 rounded-lg overflow-hidden"
             onDrop={handleDrop}
             onDragOver={handleDragOver}
           >
@@ -609,14 +609,14 @@ const Whiteboard = ({ questionId, whiteboardId }) => {
             />
             {isSelecting && selectionRect && (
               <div
-                className="absolute border-2 border-primary-500/60 bg-primary-500/10 pointer-events-none"
+                className="absolute border-2 border-indigo-400/60 bg-indigo-500/10 pointer-events-none"
                 style={{ left: selectionRect.x, top: selectionRect.y, width: selectionRect.w, height: selectionRect.h }}
               />
             )}
             {items.map((it) => (
               <div
                 key={it.id}
-                className={`absolute group ${selectedIds.includes(it.id) ? 'ring-2 ring-primary-500' : ''}`}
+                className={`absolute group ${selectedIds.includes(it.id) ? 'ring-2 ring-indigo-400' : ''}`}
                 style={{ left: it.x, top: it.y, width: it.width, height: it.height, cursor: 'move' }}
                 onMouseDown={(e) => handleItemMouseDown(e, it.id)}
               >
@@ -640,7 +640,7 @@ const Whiteboard = ({ questionId, whiteboardId }) => {
                 )}
                 <div
                   onMouseDown={(e) => startResizeItem(e, it.id)}
-                  className="absolute -bottom-1 -right-1 h-3 w-3 bg-primary-500 rounded-sm border border-white shadow opacity-0 group-hover:opacity-100 cursor-se-resize"
+                  className="absolute -bottom-1 -right-1 h-3 w-3 bg-indigo-500 rounded-sm border border-white shadow opacity-0 group-hover:opacity-100 cursor-se-resize"
                 />
               </div>
             ))}
@@ -648,8 +648,8 @@ const Whiteboard = ({ questionId, whiteboardId }) => {
         </div>
       </div>
 
-      <div className="p-4 border-t border-slate-200 text-center">
-        <p className="text-sm text-slate-500">
+      <div className="p-4 border-t border-gray-700 text-center">
+        <p className="text-sm text-gray-500">
           💡 Tip: Use the whiteboard to design system architecture, draw diagrams, and visualize your solution
         </p>
       </div>

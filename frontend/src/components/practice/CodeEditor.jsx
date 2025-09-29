@@ -128,14 +128,14 @@ const CodeEditor = ({ questionId }) => {
 
   return (
     <div className="card h-full flex flex-col">
-      <div className="p-4 border-b border-slate-200">
+      <div className="p-4 border-b border-gray-700">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold text-slate-900">Code Editor</h3>
+          <h3 className="font-semibold text-white">Code Editor</h3>
           <div className="flex items-center space-x-2">
             <select
               value={language}
               onChange={(e) => setLanguage(e.target.value)}
-              className="text-sm border border-slate-300 rounded px-2 py-1 bg-white"
+              className="input-field text-sm px-2 py-1"
             >
               {languages.map((lang) => (
                 <option key={lang.value} value={lang.value}>
@@ -179,20 +179,20 @@ const CodeEditor = ({ questionId }) => {
           />
         </div>
 
-        <div className="w-1/3 border-l border-slate-200 bg-slate-900 text-white p-4 font-mono text-sm overflow-auto">
-          <div className="mb-2 text-slate-300 font-semibold">Output:</div>
+        <div className="w-1/3 border-l border-gray-700 bg-gray-900 text-white p-4 font-mono text-sm overflow-auto">
+          <div className="mb-2 text-gray-300 font-semibold">Output:</div>
           {output ? (
             <pre className="whitespace-pre-wrap text-green-400">{output}</pre>
           ) : (
-            <pre className="text-slate-500">
+            <pre className="text-gray-500">
               {isRunning ? "Executing..." : "Output will be displayed here after running the code."}
             </pre>
           )}
         </div>
       </div>
 
-      <div className="p-4 border-t border-slate-200">
-        <p className="text-sm text-slate-500">
+      <div className="p-4 border-t border-gray-700">
+        <p className="text-sm text-gray-500">
           💡 Tip: Implement key components like load balancers, databases, caching layers, and APIs
         </p>
       </div>

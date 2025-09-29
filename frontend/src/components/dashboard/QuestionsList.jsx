@@ -82,17 +82,17 @@ const QuestionsList = () => {
       />
 
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold text-slate-900">
+        <h2 className="text-xl font-semibold text-white">
           System Design Questions
         </h2>
-        <span className="text-slate-600">
+        <span className="text-gray-400">
           {filteredQuestions.length} question{filteredQuestions.length !== 1 ? 's' : ''}
         </span>
       </div>
 
       {filteredQuestions.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-slate-600">No questions found matching your criteria.</p>
+          <p className="text-gray-400">No questions found matching your criteria.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

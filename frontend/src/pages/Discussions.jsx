@@ -20,7 +20,7 @@ const Discussions = () => {
       script.setAttribute('data-reactions-enabled', '1');
       script.setAttribute('data-emit-metadata', '0');
       script.setAttribute('data-input-position', 'bottom');
-      script.setAttribute('data-theme', 'catppuccin_latte');
+      script.setAttribute('data-theme', 'dark');
       script.setAttribute('data-lang', 'en');
       script.setAttribute('data-loading', 'lazy');
       containerRef.current.appendChild(script);
@@ -29,8 +29,8 @@ const Discussions = () => {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      <h1 className="text-2xl font-bold text-slate-900 mb-4">Discussion Forum</h1>
-      <p className="text-slate-600 mb-6">Ask questions, share insights, and discuss system design topics with the community.</p>
+      <h1 className="text-2xl font-bold text-white mb-4">Discussion Forum</h1>
+      <p className="text-gray-400 mb-6">Ask questions, share insights, and discuss system design topics with the community.</p>
       <div ref={containerRef} />
     </div>
   );

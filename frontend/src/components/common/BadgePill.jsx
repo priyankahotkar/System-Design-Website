@@ -11,7 +11,7 @@ const EMOJI_BY_KEY = {
 };
 
 const BadgePill = ({ title, badgeKey }) => (
-  <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">
+  <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-900/50 text-amber-300 border border-amber-700">
     <span className="mr-1">{EMOJI_BY_KEY[badgeKey] || '🏅'}</span>
     {title}
   </span>

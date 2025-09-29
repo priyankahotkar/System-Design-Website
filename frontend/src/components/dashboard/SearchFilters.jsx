@@ -9,8 +9,8 @@ const SearchFilters = ({ filters, onFiltersChange, categories, difficulties }) =
   return (
     <div className="card p-6">
       <div className="flex items-center space-x-2 mb-4">
-        <Filter className="h-5 w-5 text-slate-400" />
-        <h3 className="font-medium text-slate-900">Filter Questions</h3>
+        <Filter className="h-5 w-5 text-gray-500" />
+        <h3 className="font-medium text-white">Filter Questions</h3>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

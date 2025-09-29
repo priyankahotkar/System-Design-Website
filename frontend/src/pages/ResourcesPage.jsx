@@ -105,12 +105,12 @@ const ResourcesPage = () => {
   return (
     <div className="max-w-5xl mx-auto p-6">
       <ConfettiBurst fire={celebrate} />
-      <h1 className="text-2xl font-bold text-slate-900 mb-6">System Design Mastery Roadmap</h1>
+      <h1 className="text-2xl font-bold text-white mb-6">System Design Mastery Roadmap</h1>
       <div className="space-y-6">
         {PHASES.map((phase) => (
           <div key={phase.key} className="card p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-slate-900">{phase.title}</h2>
+              <h2 className="text-lg font-semibold text-white">{phase.title}</h2>
               <div className="flex items-center gap-2">
                 {hasBadge(phase.badge.key) ? (
                   <BadgePill title={phase.badge.title} badgeKey={phase.badge.key} />
@@ -123,14 +123,14 @@ const ResourcesPage = () => {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <h3 className="text-sm font-medium text-slate-700 mb-2">Topics to Cover</h3>
-                <ul className="list-disc pl-5 text-sm text-slate-600 space-y-1">
+                <h3 className="text-sm font-medium text-gray-300 mb-2">Topics to Cover</h3>
+                <ul className="list-disc pl-5 text-sm text-gray-400 space-y-1">
                   {phase.topics.map((t) => <li key={t}>{t}</li>)}
                 </ul>
               </div>
               <div className="md:col-span-2">
-                <h3 className="text-sm font-medium text-slate-700 mb-2">Resources</h3>
-                <ul className="text-sm text-primary-700 space-y-1">
+                <h3 className="text-sm font-medium text-gray-300 mb-2">Resources</h3>
+                <ul className="text-sm text-indigo-400 space-y-1">
                   {phase.resources.map((r) => (
                     <li key={r.label}>
                       <a href={r.url} target="_blank" rel="noreferrer" className="hover:underline">{r.label}</a>
