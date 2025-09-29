@@ -184,7 +184,7 @@ const PracticeSession = () => {
               <Button variant="primary" onClick={handleCreateWhiteboard}>Create Whiteboard</Button>
               <Button variant="outline" onClick={handleJoinWhiteboard}>Join Whiteboard</Button>
               {whiteboardId && (
-                <span className="text-xs text-gray-500">Current Whiteboard ID: {whiteboardId}</span>
+                <span className="text-xs text-white-500">Current Whiteboard ID: {whiteboardId}</span>
               )}
             </div>
 
