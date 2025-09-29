@@ -97,7 +97,7 @@ const HomePage = () => {
                       Start Practicing
                     </Button>
                   </Link>
-                  <Button variant="outline" size="large" className="border-indigo-400 text-indigo-400 hover:bg-indigo-400 hover:text-white px-8 py-4 text-lg">
+                  <Button variant="outline" size="large" className="border-indigo-400 text-blue-400 hover:bg-indigo-400 hover:text-blue-400 px-8 py-4 text-lg">
                     View Demo
                   </Button>
                 </>
