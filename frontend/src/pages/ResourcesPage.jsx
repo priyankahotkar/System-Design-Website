@@ -14,7 +14,7 @@ const PHASES = [
     resources: [
       { label: 'System Design Primer GitHub', url: 'https://github.com/donnemartin/system-design-primer' },
       { label: 'System Design 101 by ByteByteGo', url: 'https://bytebytego.com/' },
-      { label: "Aryan Mittal's LLD Crash Course", url: 'https://www.youtube.com/@aryancodes' },
+      { label: "Aryan Mittal's LLD Crash Course", url: 'https://www.youtube.com/@codeWithAryanBhai' },
     ],
   },
   {
@@ -23,7 +23,7 @@ const PHASES = [
     badge: { key: 'lld_architect', title: 'LLD Architect' },
     topics: ['Class Diagrams', 'OOP & SOLID', 'Design Patterns', 'Concurrency in Design'],
     resources: [
-      { label: "Aryan Mittal's LLD Playlist", url: 'https://www.youtube.com/@aryancodes' },
+      { label: "Aryan Mittal's LLD Playlist", url: 'https://www.youtube.com/@codeWithAryanBhai' },
       { label: 'Awesome LLD GitHub Repository', url: 'https://github.com/ashishps1/awesome-low-level-design' },
     ],
   },
@@ -44,7 +44,7 @@ const PHASES = [
     topics: ['URL Shortener', 'Chat Application', 'E-commerce System'],
     resources: [
       { label: 'System Design Primer Projects', url: 'https://github.com/donnemartin/system-design-primer' },
-      { label: 'CodeWithAryan Projects', url: 'https://www.youtube.com/@aryancodes' },
+      { label: 'Piyush Garg System Design Projects', url: 'https://www.youtube.com/@piyushgargdev' },
     ],
   },
   {
