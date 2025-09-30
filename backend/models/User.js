@@ -43,6 +43,11 @@ const userSchema = new mongoose.Schema({
         type: Date,
         default: Date.now
     },
+    solvedQuestions: [
+        {
+          type: String,
+        },
+    ],
     badges: [
         {
             key: { type: String, required: true },

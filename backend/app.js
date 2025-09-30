@@ -48,9 +48,11 @@ app.use(express.json());
 const authRoutes = require('./routes/authRoutes');
 const whiteboardRoutes = require('./routes/whiteboardRoutes');
 const badgeRoutes = require('./routes/badgeRoutes');
+const solvedQuestionsRoutes = require('./routes/solvedQuestionsRoutes');
 app.use('/api/auth', authRoutes);
 app.use('/api/whiteboard', whiteboardRoutes);
 app.use('/api/badges', badgeRoutes);
+app.use('/api/solvedQuestions', solvedQuestionsRoutes);
 
 // Socket.IO setup with CORS matching frontend dev origin
 const io = new Server(server, {

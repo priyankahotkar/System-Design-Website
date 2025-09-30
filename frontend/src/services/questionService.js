@@ -61,9 +61,6 @@ const mockQuestions = [
     topics: ['Service Discovery', 'API Gateway', 'Circuit Breaker'],
     createdAt: '2024-01-10T13:00:00Z'
   },
-
-  // — New ones added below —
-
   {
     id: '7',
     title: 'Design Parking Lot System',

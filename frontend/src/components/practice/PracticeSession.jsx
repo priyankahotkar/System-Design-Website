@@ -8,6 +8,7 @@ import CodeEditor from './CodeEditor';
 import LoadingSpinner from '../common/LoadingSpinner';
 import Button from '../common/Button';
 import { whiteboardService } from '../../services/whiteboardService';
+import MarkAsSolved from './MarkAsSolved';
 
 const PracticeSession = () => {
   const { id } = useParams();
@@ -111,6 +112,7 @@ const PracticeSession = () => {
                 <Clock className="h-4 w-4 mr-1" />
                 {question.estimatedTime}
               </div>
+              <MarkAsSolved questionId={id} />
             </div>
           </div>
         </div>

@@ -61,10 +61,12 @@ const Header = () => {
           <div className="hidden md:flex items-center space-x-4">
             {isAuthenticated ? (
               <>
-                <div className="flex items-center space-x-2">
+                  <Link to="/profile">
+                  <div className="flex items-center space-x-2">
                   <User className="h-5 w-5 text-gray-500" />
                   <span className="text-gray-300 font-medium">{user.name}</span>
-                </div>
+                  </div>
+                  </Link>
                 <Button
                   variant="outline"
                   size="small"

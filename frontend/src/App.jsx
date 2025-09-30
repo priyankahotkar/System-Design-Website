@@ -13,6 +13,7 @@ import ContactUs from './pages/ContactUs';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsAndConditions from './pages/TermsAndConditions';
 import { Analytics } from "@vercel/analytics/react";
+import UserProfile from './pages/UserProfile';
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
             <Route path="/contact-us" element={<ContactUs />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
+            <Route path="/profile" element={<UserProfile />} />
           </Routes>
         </Layout>
       </Router>
