@@ -140,6 +140,116 @@ const mockQuestions = [
     estimatedTime: '30-45 minutes',
     topics: ['Queueing', 'Retry Mechanism', 'Fan-out', 'Backoff Strategy'],
     createdAt: '2024-01-02T08:50:00Z'
+  },
+  {
+    id: '15',
+    title: 'Design Vending Machine',
+    description: 'Design a vending machine system that handles product selection, payment, and inventory management.',
+    category: QUESTION_CATEGORIES.SYSTEM,
+    difficulty: DIFFICULTY_LEVELS.MEDIUM,
+    estimatedTime: '30-45 minutes',
+    topics: ['OOP Design', 'State Pattern', 'Singleton', 'Inventory Management'],
+    createdAt: '2024-01-01T12:00:00Z'
+  },
+  {
+    id: '16',
+    title: 'Design ATM System',
+    description: 'Build an ATM system supporting withdrawals, deposits, balance checks, and transaction logging.',
+    category: QUESTION_CATEGORIES.SECURITY,
+    difficulty: DIFFICULTY_LEVELS.MEDIUM,
+    estimatedTime: '30-45 minutes',
+    topics: ['OOP Design', 'Authentication', 'Transactions', 'State Management'],
+    createdAt: '2023-12-31T10:00:00Z'
+  },
+  {
+    id: '17',
+    title: 'Design Restaurant Management System',
+    description: 'Design a system for managing orders, tables, menus, and billing in a restaurant.',
+    category: QUESTION_CATEGORIES.SYSTEM,
+    difficulty: DIFFICULTY_LEVELS.HARD,
+    estimatedTime: '45-60 minutes',
+    topics: ['OOP Design', 'Observer Pattern', 'Factory Pattern', 'Billing'],
+    createdAt: '2023-12-30T14:00:00Z'
+  },
+  {
+    id: '18',
+    title: 'Design Tic-Tac-Toe Game',
+    description: 'Implement a Tic-Tac-Toe game with player turns, win detection, and draw conditions.',
+    category: QUESTION_CATEGORIES.SYSTEM,
+    difficulty: DIFFICULTY_LEVELS.EASY,
+    estimatedTime: '20-30 minutes',
+    topics: ['OOP Design', 'Game Logic', 'State Management'],
+    createdAt: '2023-12-29T11:00:00Z'
+  },
+  {
+    id: '19',
+    title: 'Design Snake Game',
+    description: 'Design a classic Snake game handling movement, food generation, collision detection, and scoring.',
+    category: QUESTION_CATEGORIES.SYSTEM,
+    difficulty: DIFFICULTY_LEVELS.MEDIUM,
+    estimatedTime: '30-45 minutes',
+    topics: ['OOP Design', 'Event Handling', 'Collision Detection', 'Scoring'],
+    createdAt: '2023-12-28T09:00:00Z'
+  },
+  {
+    id: '20',
+    title: 'Design Chess Game',
+    description: 'Build a chess game system with piece movements, rules enforcement, and checkmate detection.',
+    category: QUESTION_CATEGORIES.SYSTEM,
+    difficulty: DIFFICULTY_LEVELS.HARD,
+    estimatedTime: '45-60 minutes',
+    topics: ['OOP Design', 'Polymorphism', 'Strategy Pattern', 'Game Rules'],
+    createdAt: '2023-12-27T15:00:00Z'
+  },
+  {
+    id: '21',
+    title: 'Design File System',
+    description: 'Design a file system supporting directories, files, permissions, and basic operations like create/delete.',
+    category: QUESTION_CATEGORIES.DATABASE,
+    difficulty: DIFFICULTY_LEVELS.HARD,
+    estimatedTime: '45-60 minutes',
+    topics: ['Tree Structure', 'OOP Design', 'Permissions', 'Traversal'],
+    createdAt: '2023-12-26T13:00:00Z'
+  },
+  {
+    id: '22',
+    title: 'Design Logger Framework',
+    description: 'Create a flexible logging system with levels, appenders, and configurable formats.',
+    category: QUESTION_CATEGORIES.SYSTEM,
+    difficulty: DIFFICULTY_LEVELS.MEDIUM,
+    estimatedTime: '30-45 minutes',
+    topics: ['Singleton', 'Observer Pattern', 'Configuration', 'Appender'],
+    createdAt: '2023-12-25T10:30:00Z'
+  },
+  {
+    id: '23',
+    title: 'Design Deck of Cards',
+    description: 'Design a deck of cards system for games, including shuffling, dealing, and card representations.',
+    category: QUESTION_CATEGORIES.SYSTEM,
+    difficulty: DIFFICULTY_LEVELS.EASY,
+    estimatedTime: '20-30 minutes',
+    topics: ['OOP Design', 'Enums', 'Collections', 'Shuffling'],
+    createdAt: '2023-12-24T12:00:00Z'
+  },
+  {
+    id: '24',
+    title: 'Design Online Shopping Cart',
+    description: 'Build a shopping cart system handling item addition/removal, quantity updates, and checkout.',
+    category: QUESTION_CATEGORIES.SCALABILITY,
+    difficulty: DIFFICULTY_LEVELS.MEDIUM,
+    estimatedTime: '30-45 minutes',
+    topics: ['OOP Design', 'Session Management', 'Pricing', 'Inventory Sync'],
+    createdAt: '2023-12-23T14:30:00Z'
+  },
+  {
+    id: '25',
+    title: 'Design Traffic Light System',
+    description: 'Design a traffic light control system for intersections with timing, synchronization, and pedestrian signals.',
+    category: QUESTION_CATEGORIES.SYSTEM,
+    difficulty: DIFFICULTY_LEVELS.MEDIUM,
+    estimatedTime: '30-45 minutes',
+    topics: ['State Pattern', 'Timer', 'Synchronization', 'OOP Design'],
+    createdAt: '2023-12-22T11:00:00Z'
   }
 ];
 
