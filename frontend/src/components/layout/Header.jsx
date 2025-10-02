@@ -95,11 +95,11 @@ const Header = () => {
               Questions
             </Link>
             <Link 
-              to="/leaderboard" 
+              to="/discussion-forum" 
               onClick={() => setOpen(false)}
               className="block px-3 py-2 rounded-md text-gray-300 hover:bg-gray-800"
             >
-              Leaderboard
+              Discussion Forum
             </Link>
             <Link 
               to="/resources" 
