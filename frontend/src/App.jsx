@@ -14,12 +14,14 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsAndConditions from './pages/TermsAndConditions';
 import { Analytics } from "@vercel/analytics/react";
 import UserProfile from './pages/UserProfile';
+import { SpeedInsights } from "@vercel/speed-insights/react";
 
 function App() {
   return (
     <AuthProvider>
       <Router>
         <Analytics />
+        <SpeedInsights />
         <Layout>
           <Routes>
             <Route path="/" element={<HomePage />} />

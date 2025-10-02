@@ -13,6 +13,7 @@
     "@monaco-editor/react": "^4.7.0",
     "@tailwindcss/typography": "^0.5.18",
     "@vercel/analytics": "^1.5.0",
+    "@vercel/speed-insights": "^1.2.0",
     "autoprefixer": "^10.4.21",
     "firebase": "^12.3.0",
     "framer-motion": "^12.23.22",
