@@ -57,7 +57,10 @@ app.use('/api/solvedQuestions', solvedQuestionsRoutes);
 // Socket.IO setup with CORS matching frontend dev origin
 const io = new Server(server, {
     cors: {
-        origin: process.env.FRONTEND_ORIGIN || '*',
+        origin: (origin, callback) => {
+            if (allowedOrigins.includes(origin) || !origin) callback(null, true);
+            else callback(new Error("Not allowed by Socket.IO CORS"));
+        },
         methods: ['GET', 'POST'],
         credentials: true,
     },
